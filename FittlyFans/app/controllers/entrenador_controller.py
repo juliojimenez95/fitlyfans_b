@@ -2,8 +2,10 @@ from typing import List, Dict
 from app.controllers.base_controller import BaseController
 
 
+
 class EntrenadorController(BaseController):
     """Controlador para la entidad Entrenador."""
+    
     
     def crear(self, usuario_id: int, especialidad: str = None, certificaciones: str = None) -> bool:
         """

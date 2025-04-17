@@ -18,3 +18,4 @@ class Config:
     
     # Configuración JWT
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwtsecretkey123')
+    JWT_ACCESS_TOKEN_EXPIRES = int(os.getenv('JWT_ACCESS_TOKEN_EXPIRES', 3600))  # en segundos

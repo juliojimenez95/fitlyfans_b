@@ -1,27 +1,55 @@
 from typing import List, Dict
+import bcrypt
 from app.controllers.base_controller import BaseController
+from app.controllers.suscriptor_controller import SuscriptorController
+from app.controllers.entrenador_controller import EntrenadorController
 
 class UsuarioController(BaseController):
     """Controlador para la entidad Usuario."""
+
+    def __init__(self):
+        super().__init__()
+        self.suscriptor_controller = SuscriptorController()
+        self.entrenador_controller = EntrenadorController()
     
-    def crear(self, nombre: str, correo: str, contrasena: str, tipo_usuario: str) -> int:
+    def crear(self, nombre: str, correo: str, contrasena: str, tipo_usuario: str,
+          objetivo: str = None, nivel_fitness: str = None,
+          especialidad: str = None, certificaciones: str = None) -> int:
         """
-        Crea un nuevo usuario.
-        
-        Args:
-            nombre: Nombre del usuario
-            correo: Correo electrónico del usuario
-            contrasena: Contraseña del usuario
-            tipo_usuario: Tipo de usuario (generico, suscriptor, entrenador)
-            
-        Returns:
-            ID del usuario creado o 0 si falla
+        Crea un nuevo usuario y registra información adicional según su tipo.
         """
+        # Encriptar la contraseña
+        hashed_password = bcrypt.hashpw(contrasena.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
         query = """
         INSERT INTO Usuario (nombre, correo, contrasena, tipo_usuario)
         VALUES (%s, %s, %s, %s)
         """
-        return self._execute_insert(query, (nombre, correo, contrasena, tipo_usuario))
+        usuario_id = self._execute_insert(query, (nombre, correo, hashed_password, tipo_usuario))
+        
+        if usuario_id == 0:
+            return 0
+
+        if tipo_usuario == 'suscriptor':
+            creado = self.suscriptor_controller.crear(
+                usuario_id=usuario_id,
+                objetivo=objetivo,
+                nivel_fitness=nivel_fitness
+            )
+            if not creado:
+                return 0
+
+        elif tipo_usuario == 'entrenador':
+            creado = self.entrenador_controller.crear(
+                usuario_id=usuario_id,
+                especialidad=especialidad,
+                certificaciones=certificaciones
+            )
+            if not creado:
+                return 0
+
+        return usuario_id
+
     
     def obtener_por_id(self, usuario_id: int) -> Dict:
         """
@@ -142,10 +170,22 @@ class UsuarioController(BaseController):
         Args:
             correo: Correo electrónico del usuario
             contrasena: Contraseña del usuario
-            
+        
         Returns:
             Información del usuario si las credenciales son correctas, diccionario vacío en caso contrario
         """
-        query = "SELECT * FROM Usuario WHERE correo = %s AND contrasena = %s"
-        resultados = self._execute_query(query, (correo, contrasena))
-        return resultados[0] if resultados else {}
+        # Consultar el usuario por correo
+        query = "SELECT * FROM Usuario WHERE correo = %s"
+        resultados = self._execute_query(query, (correo,))
+        
+        if not resultados:
+            return {}
+        
+        usuario = resultados[0]
+        contraseña_guardada = usuario['contrasena']
+        
+        # Verificar que la contraseña ingresada coincida con la encriptada en la base de datos
+        if bcrypt.checkpw(contrasena.encode('utf-8'), contraseña_guardada.encode('utf-8')):
+            return usuario
+        else:
+            return {}
