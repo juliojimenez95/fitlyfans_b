@@ -4,7 +4,7 @@ from app.config import Config
 
 app = create_app()
 
-# ✅ Ya no le pases parámetros, porque los toma del .env
+# ✅ no se mandan parametros porque los toma del .env
 db = DatabaseConnectionSingleton()
 
 if __name__ == '__main__':

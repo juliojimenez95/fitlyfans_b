@@ -5,13 +5,13 @@ from app.controllers.base_controller import BaseController
 class PagoController(BaseController):
     """Controlador para la entidad Pago."""
     
-    def crear(self, id_suscriptor: int, monto: float, metodo_pago: str,
+    def crear(self, pago_id: int, monto: float, metodo_pago: str,
              estado: str = 'pendiente', descripcion: str = None) -> int:
         """
         Registra un nuevo pago.
         
         Args:
-            id_suscriptor: ID del suscriptor que realiza el pago
+            pago_id: ID del suscricion a la que se le hace el pago 
             monto: Monto del pago
             metodo_pago: Método de pago (tarjeta, paypal, transferencia)
             estado: Estado del pago (pendiente, completado, fallido)
@@ -21,10 +21,10 @@ class PagoController(BaseController):
             ID del pago creado o 0 si falla
         """
         query = """
-        INSERT INTO Pago (id_suscriptor, monto, metodo_pago, estado, descripcion)
+        INSERT INTO Pago (pago_id, monto, metodo_pago, estado, descripcion)
         VALUES (%s, %s, %s, %s, %s)
         """
-        return self._execute_insert(query, (id_suscriptor, monto, metodo_pago, estado, descripcion))
+        return self._execute_insert(query, (pago_id, monto, metodo_pago, estado, descripcion))
     
     def obtener(self, pago_id: int) -> Dict:
         """
