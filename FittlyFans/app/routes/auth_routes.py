@@ -65,7 +65,13 @@ def register():
         nombre=data['nombre'],
         correo=data['correo'],
         contrasena=data['contrasena'],
-        tipo_usuario=data.get('tipo_usuario', 'generico')
+        tipo_usuario=data.get('tipo_usuario', 'generico'),
+        objetivo=data.get('objetivo'),
+        nivel_fitness=data.get('nivel_fitness'),
+        especialidad=data.get('especialidad'),
+        certificaciones=data.get('certificaciones'),
+        objetivo=data.get('objetivo'),
+        nivel_fitness=data.get('nivel_fitness')
     )
     
     if usuario_id == 0:
