@@ -69,9 +69,7 @@ def register():
         objetivo=data.get('objetivo'),
         nivel_fitness=data.get('nivel_fitness'),
         especialidad=data.get('especialidad'),
-        certificaciones=data.get('certificaciones'),
-        objetivo=data.get('objetivo'),
-        nivel_fitness=data.get('nivel_fitness')
+        certificaciones=data.get('certificaciones')
     )
     
     if usuario_id == 0:
