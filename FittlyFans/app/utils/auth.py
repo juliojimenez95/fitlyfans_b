@@ -41,3 +41,24 @@ def token_required(f):
         return f(*args, **kwargs)
     
     return decorated
+
+def get_user_id_from_token(token):
+    """
+    Extrae el ID del usuario a partir del token JWT.
+    
+    Args:
+        token: El token JWT
+        
+    Returns:
+        El ID del usuario o None si el token no es válido
+    """
+    # Implementación dependiendo de cómo almacenas los datos del usuario en el token
+    try:
+        # Esto es solo un ejemplo, ajústalo según tu implementación
+        from flask import current_app
+        import jwt
+        
+        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        return payload.get('usuario_id')
+    except:
+        return None

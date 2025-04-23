@@ -25,6 +25,7 @@ def create_app():
     from app.routes.contenido_routes import contenido_bp
     from app.routes.comentario_routes import comentario_bp
     from app.routes.conversacion_routes import mensajes_bp
+    from app.routes.mensaje_routes import mensaje_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(suscriptor_bp, url_prefix='/api/suscriptor')
@@ -37,5 +38,6 @@ def create_app():
     app.register_blueprint(contenido_bp, url_prefix='/api/contenido')
     app.register_blueprint(comentario_bp, url_prefix='/api/comentario')
     app.register_blueprint(mensajes_bp, url_prefix='/api/mensajes')
+    app.register_blueprint(mensaje_bp, url_prefix='/api/mensaje')
 
     return app

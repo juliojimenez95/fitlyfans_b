@@ -92,3 +92,17 @@ def contar_seguidores(id_usuario, *args, **kwargs):
 def contar_seguidos(id_usuario, *args, **kwargs):
     total = suscripcion_controller.contar_seguidos(id_usuario)
     return jsonify({'total_seguidos': total}), 200
+
+
+# Verificar si un usuario sigue a otro (recibe ambos IDs)
+@suscripcion_bp.route('/verificar/doble', methods=['GET'])
+@token_required
+def verificar_suscripcion_doble(*args, **kwargs):
+    id_seguidor = request.args.get('id_seguidor', type=int)
+    id_seguido = request.args.get('id_seguido', type=int)
+
+    if not id_seguidor or not id_seguido:
+        return jsonify({'error': 'Faltan los parámetros id_seguidor o id_seguido'}), 400
+
+    sigue = suscripcion_controller.es_seguidor(id_seguidor, id_seguido)
+    return jsonify({'sigue': sigue}), 200
