@@ -91,30 +91,33 @@ class MensajeController(BaseController):
     def listar_por_entrenador_suscriptor(self, entrenador_id: int, suscriptor_id: int, limite: int = 100, offset: int = 0) -> List[Dict]:
         """
         Lista mensajes entre un entrenador y un suscriptor con paginación.
-        
+
         Args:
             entrenador_id: ID del entrenador
             suscriptor_id: ID del suscriptor
             limite: Número máximo de registros a devolver
             offset: Número de registros a omitir
-            
+
         Returns:
             Lista de mensajes
         """
         query = """
         SELECT m.*, 
-               CASE 
-                   WHEN m.emisor = 1 THEN s.nombre 
-                   ELSE e.nombre 
-               END as nombre_emisor
+            CASE 
+                WHEN m.emisor = 1 THEN u_sus.nombre 
+                ELSE u_ent.nombre 
+            END AS nombre_emisor
         FROM Mensaje m
         LEFT JOIN Suscriptor s ON m.suscriptor_id = s.id
+        LEFT JOIN Usuario u_sus ON s.id = u_sus.id
         LEFT JOIN Entrenador e ON m.entrenador_id = e.id
+        LEFT JOIN Usuario u_ent ON e.id = u_ent.id
         WHERE m.entrenador_id = %s AND m.suscriptor_id = %s
         ORDER BY m.fecha_envio ASC
         LIMIT %s OFFSET %s
         """
         return self._execute_query(query, (entrenador_id, suscriptor_id, limite, offset))
+
     
     def marcar_como_leido(self, mensaje_id: int) -> bool:
         """
