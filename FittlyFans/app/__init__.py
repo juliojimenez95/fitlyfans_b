@@ -1,13 +1,23 @@
 from flask import Flask
-from flask_cors import CORS  # 👈 AÑADIDO
+from flask_cors import CORS  
 from app.config import Config
 from app.models import db
+import os
+
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads', 'videos')
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max upload
+app.config['BASE_URL'] = 'http://127.0.0.1:5000'  # Cambia esto según tu configuración
+
+# Crear directorio si no existe
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app)  # 👈 ESTA LÍNEA HABILITA CORS
+    CORS(app) 
 
     @app.teardown_appcontext
     def close_db_connection(error):

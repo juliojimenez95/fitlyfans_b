@@ -1,6 +1,6 @@
 from typing import List, Dict
 from app.controllers.base_controller import BaseController
-
+from flask import Flask, g
 
 class EjercicioController(BaseController):
     """Controlador para la entidad Ejercicio."""
@@ -167,3 +167,69 @@ class EjercicioController(BaseController):
         """
         filas_afectadas = self._execute_update(query, (id_rutina, id_ejercicio, orden, series, repeticiones, duracion))
         return filas_afectadas > 0
+    
+
+    def obtener_url_video(self, video_path):
+        """
+        Convierte una ruta relativa de video a una URL completa
+        
+        Args:
+            video_path: Ruta relativa del video
+            
+        Returns:
+            URL completa del video
+        """
+        if not video_path:
+            return None
+        
+        # Usando g.flask_app si lo tienes configurado
+        # (deberías almacenar la instancia de la app en g.flask_app durante la inicialización)
+        if hasattr(g, 'flask_app'):
+            base_url = g.flask_app.config.get('BASE_URL', 'http://127.0.0.1:5000')
+        else:
+            # O simplemente usar una URL base hardcodeada si no tienes acceso a la config
+            base_url = 'http://127.0.0.1:5000'
+            
+        return f"{base_url}/api/ejercicios{video_path}"
+
+    # Alternativa: Pasar la base_url como argumento
+    def obtener_url_video_alt(self, video_path, base_url='http://127.0.0.1:5000'):
+        """
+        Convierte una ruta relativa de video a una URL completa
+        
+        Args:
+            video_path: Ruta relativa del video
+            base_url: URL base del servidor
+            
+        Returns:
+            URL completa del video
+        """
+        if not video_path:
+            return None
+            
+        return f"{base_url}/api/ejercicios{video_path}"
+
+    # Modificar el método para obtener un ejercicio para que devuelva la URL completa del video
+    def obtener(self, ejercicio_id: int):
+        """
+        Obtiene un ejercicio por su ID
+        
+        Args:
+            ejercicio_id: ID del ejercicio a buscar
+            
+        Returns:
+            Diccionario con la información del ejercicio o None si no existe
+        """
+        query = """
+        SELECT id, nombre, descripcion, grupo_muscular, tipo, video_instruccion
+        FROM Ejercicio WHERE id = %s
+        """
+        result = self._execute_query(query, (ejercicio_id,))
+        
+        if result and len(result) > 0:
+            ejercicio = result[0]
+            # Generar URL completa para el video si existe
+            if ejercicio['video_instruccion']:
+                ejercicio['video_url'] = self.obtener_url_video(ejercicio['video_instruccion'])
+            return ejercicio
+        return None

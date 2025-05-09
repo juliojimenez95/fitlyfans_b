@@ -1,26 +1,83 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify,send_from_directory
 from app.controllers.ejercicio_controller import EjercicioController
 from app.utils.auth import token_required
+import os
+from flask import request, jsonify, current_app
+from werkzeug.utils import secure_filename
+import uuid
 
 ejercicio_bp = Blueprint('ejercicio', __name__)
 ejercicio_controller = EjercicioController()
 
-# Crear un nuevo ejercicio
+# Agregar esta función para manejar la subida de archivos
+def allowed_video_file(filename):
+    ALLOWED_EXTENSIONS = {'mp4', 'mov', 'avi', 'webm', '3gp'}
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+# Añadir esta configuración en el archivo de inicialización de Flask (app.py o __init__.py)
+# app.config['UPLOAD_FOLDER'] = 'uploads/videos'
+# app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max upload
+
+# Asegúrate de crear el directorio de subidas
+# if not os.path.exists(app.config['UPLOAD_FOLDER']):
+#     os.makedirs(app.config['UPLOAD_FOLDER'])
+
+# Modificación de la ruta para manejar la subida de archivos
 @ejercicio_bp.route('', methods=['POST'])
 @token_required
 def crear_ejercicio(*args, **kwargs):
-    data = request.json
-    nombre = data.get('nombre')
-    descripcion = data.get('descripcion')
-    grupo_muscular = data.get('grupo_muscular')
-    tipo = data.get('tipo', 'fuerza')
-    video_instruccion = data.get('video_instruccion')
+    try:
+        # Asegúrate de que existe el directorio para subir
+        upload_folder = os.path.join(current_app.root_path, 'uploads', 'videos')
+        if not os.path.exists(upload_folder):
+            os.makedirs(upload_folder)
+        
+        # Extraer datos del formulario
+        nombre = request.form.get('nombre')
+        descripcion = request.form.get('descripcion')
+        grupo_muscular = request.form.get('grupo_muscular')
+        tipo = request.form.get('tipo', 'fuerza')
+        
+        if not nombre:
+            return jsonify({'error': 'El nombre es obligatorio'}), 400
+        
+        # Manejar la subida de video
+        video_path = None
+        if 'video' in request.files:
+            video_file = request.files['video']
+            if video_file.filename != '':
+                if allowed_video_file(video_file.filename):
+                    # Generar un nombre único para evitar colisiones
+                    filename = secure_filename(video_file.filename)
+                    filename = f"{uuid.uuid4()}_{filename}"
+                    
+                    # Guardar el archivo
+                    file_path = os.path.join(upload_folder, filename)
+                    video_file.save(file_path)
+                    
+                    # Guardar la ruta relativa en la base de datos
+                    video_path = f"/uploads/videos/{filename}"
+                else:
+                    return jsonify({'error': 'Tipo de archivo no permitido. Use mp4, mov, avi, webm o 3gp'}), 400
+        
+        # Crear el ejercicio en la base de datos
+        ejercicio_id = ejercicio_controller.crear(nombre, descripcion, grupo_muscular, tipo, video_path)
+        
+        return jsonify({
+            'mensaje': 'Ejercicio creado', 
+            'id_ejercicio': ejercicio_id, 
+            'video_path': video_path
+        }), 201
+    
+    except Exception as e:
+        current_app.logger.error(f"Error al crear ejercicio: {str(e)}")
+        return jsonify({'error': 'Error interno del servidor', 'detalles': str(e)}), 500
 
-    if not nombre:
-        return jsonify({'error': 'El nombre es obligatorio'}), 400
-
-    ejercicio_id = ejercicio_controller.crear(nombre, descripcion, grupo_muscular, tipo, video_instruccion)
-    return jsonify({'mensaje': 'Ejercicio creado', 'id_ejercicio': ejercicio_id}), 201
+# Añadir una ruta para servir los videos
+@ejercicio_bp.route('/videos/<path:filename>')
+def serve_video(filename):
+    return send_from_directory(os.path.join(current_app.root_path, 'uploads', 'videos'), filename)
 
 # Obtener ejercicio por ID
 @ejercicio_bp.route('/<int:ejercicio_id>', methods=['GET'])
