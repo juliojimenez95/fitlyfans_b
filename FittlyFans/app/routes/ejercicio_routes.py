@@ -28,48 +28,58 @@ def allowed_video_file(filename):
 @token_required
 def crear_ejercicio(*args, **kwargs):
     try:
+        # Obtener el usuario autenticado desde el decorador
+        entrenador = kwargs.get('current_user')
+        entrenador_id = entrenador.get('id') if entrenador else None
+
+        print('Usuario autenticado:', entrenador)
+
+        if not entrenador_id:
+            return jsonify({'error': 'No se pudo identificar al entrenador'}), 403
+
+        # (Opcional) Validar que el rol sea "entrenador"
+        if entrenador.get('rol') != 'entrenador':
+            return jsonify({'error': 'No autorizado. Debes ser un entrenador'}), 403
+
         # Asegúrate de que existe el directorio para subir
         upload_folder = os.path.join(current_app.root_path, 'uploads', 'videos')
         if not os.path.exists(upload_folder):
             os.makedirs(upload_folder)
-        
+
         # Extraer datos del formulario
         nombre = request.form.get('nombre')
         descripcion = request.form.get('descripcion')
         grupo_muscular = request.form.get('grupo_muscular')
         tipo = request.form.get('tipo', 'fuerza')
-        
+
         if not nombre:
             return jsonify({'error': 'El nombre es obligatorio'}), 400
-        
+
         # Manejar la subida de video
         video_path = None
         if 'video' in request.files:
             video_file = request.files['video']
             if video_file.filename != '':
                 if allowed_video_file(video_file.filename):
-                    # Generar un nombre único para evitar colisiones
                     filename = secure_filename(video_file.filename)
                     filename = f"{uuid.uuid4()}_{filename}"
-                    
-                    # Guardar el archivo
                     file_path = os.path.join(upload_folder, filename)
                     video_file.save(file_path)
-                    
-                    # Guardar la ruta relativa en la base de datos
                     video_path = f"/uploads/videos/{filename}"
                 else:
                     return jsonify({'error': 'Tipo de archivo no permitido. Use mp4, mov, avi, webm o 3gp'}), 400
-        
+
         # Crear el ejercicio en la base de datos
-        ejercicio_id = ejercicio_controller.crear(nombre, descripcion, grupo_muscular, tipo, video_path)
-        
+        ejercicio_id = ejercicio_controller.crear(
+            nombre, descripcion, grupo_muscular, tipo, video_path, entrenador_id
+        )
+
         return jsonify({
-            'mensaje': 'Ejercicio creado', 
-            'id_ejercicio': ejercicio_id, 
+            'mensaje': 'Ejercicio creado',
+            'id_ejercicio': ejercicio_id,
             'video_path': video_path
         }), 201
-    
+
     except Exception as e:
         current_app.logger.error(f"Error al crear ejercicio: {str(e)}")
         return jsonify({'error': 'Error interno del servidor', 'detalles': str(e)}), 500

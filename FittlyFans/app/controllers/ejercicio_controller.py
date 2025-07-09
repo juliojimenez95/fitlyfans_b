@@ -16,15 +16,16 @@ class EjercicioController(BaseController):
             grupo_muscular: Grupo muscular principal (opcional)
             tipo: Tipo de ejercicio (cardio, fuerza, flexibilidad, equilibrio)
             video_instruccion: URL de video instructivo (opcional)
+            entrenador_id: ID del entrenador que crea el ejercicio
             
         Returns:
             ID del ejercicio creado o 0 si falla
         """
         query = """
-        INSERT INTO Ejercicio (nombre, descripcion, grupo_muscular, tipo, video_instruccion)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO Ejercicio (nombre, descripcion, grupo_muscular, tipo, video_instruccion, entrenador_id)
+        VALUES (%s, %s, %s, %s, %s, %s)
         """
-        return self._execute_insert(query, (nombre, descripcion, grupo_muscular, tipo, video_instruccion))
+        return self._execute_insert(query, (nombre, descripcion, grupo_muscular, tipo, video_instruccion, entrenador_id))
     
     def obtener(self, ejercicio_id: int) -> Dict:
         """
