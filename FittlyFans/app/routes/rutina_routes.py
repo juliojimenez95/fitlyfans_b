@@ -7,16 +7,21 @@ rutina_controller = RutinaController()
 
 @rutina_bp.route("/rutinas", methods=["POST"])
 @token_required
-def crear_rutina():
+def crear_rutina(**kwargs):
     data = request.get_json()
+
     id_entrenador = data.get("id_entrenador")
     nombre = data.get("nombre")
     descripcion = data.get("descripcion")
     nivel_dificultad = data.get("nivel_dificultad", "principiante")
     duracion_estimada = data.get("duracion_estimada", 0)
-    
+
     rutina_id = rutina_controller.crear(id_entrenador, nombre, descripcion, nivel_dificultad, duracion_estimada)
-    return jsonify({"id": rutina_id}), 201 if rutina_id else 400
+    
+    if rutina_id:
+        return jsonify({"id": rutina_id}), 201
+    else:
+        return jsonify({"error": "No se pudo crear la rutina"}), 400
 
 @rutina_bp.route("/rutinas/<int:rutina_id>", methods=["GET"])
 @token_required

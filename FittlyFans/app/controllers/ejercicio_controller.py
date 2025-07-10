@@ -234,3 +234,12 @@ class EjercicioController(BaseController):
                 ejercicio['video_url'] = self.obtener_url_video(ejercicio['video_instruccion'])
             return ejercicio
         return None
+    
+def obtener_por_entrenador(entrenador_id):
+    # Ejemplo de implementación (adapta según tu estructura de BD)
+    query = """
+    SELECT id, nombre, descripcion, grupo_muscular, tipo, video_path, entrenador_id, created_at
+    FROM ejercicios 
+    WHERE entrenador_id = %s
+    ORDER BY created_at DESC
+    """

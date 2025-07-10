@@ -168,3 +168,77 @@ def agregar_a_rutina(*args, **kwargs):
     if not agregado:
         return jsonify({'error': 'No se pudo agregar el ejercicio a la rutina'}), 400
     return jsonify({'mensaje': 'Ejercicio agregado a la rutina'}), 201
+
+# Ruta para obtener los ejercicios del entrenador autenticado
+@ejercicio_bp.route('', methods=['GET'])
+@token_required
+def obtener_ejercicios_entrenador(*args, **kwargs):
+    try:
+        # Obtener el usuario autenticado desde el decorador
+        entrenador = kwargs.get('current_user')
+        entrenador_id = entrenador.get('id') if entrenador else None
+
+        print('Usuario autenticado:', entrenador)
+
+        if not entrenador_id:
+            return jsonify({'error': 'No se pudo identificar al entrenador'}), 403
+
+        # (Opcional) Validar que el rol sea "entrenador"
+        if entrenador.get('rol') != 'entrenador':
+            return jsonify({'error': 'No autorizado. Debes ser un entrenador'}), 403
+
+        # Obtener los ejercicios del entrenador desde el controlador
+        ejercicios = ejercicio_controller.obtener_por_entrenador(entrenador_id)
+
+        # Si no hay ejercicios, devolver lista vacía
+        if not ejercicios:
+            return jsonify({
+                'mensaje': 'No se encontraron ejercicios para este entrenador',
+                'ejercicios': []
+            }), 200
+
+        return jsonify({
+            'mensaje': 'Ejercicios obtenidos correctamente',
+            'ejercicios': ejercicios,
+            'total': len(ejercicios)
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error al obtener ejercicios del entrenador: {str(e)}")
+        return jsonify({'error': 'Error interno del servidor', 'detalles': str(e)}), 500
+
+
+# Ruta alternativa para obtener ejercicios de un entrenador específico por ID
+# (útil si necesitas obtener ejercicios de otro entrenador, solo para admin)
+@ejercicio_bp.route('/entrenador/<int:entrenador_id>', methods=['GET'])
+@token_required
+def obtener_ejercicios_por_entrenador_id(entrenador_id, *args, **kwargs):
+    try:
+        # Obtener el usuario autenticado desde el decorador
+        usuario_actual = kwargs.get('current_user')
+        
+        if not usuario_actual:
+            return jsonify({'error': 'No se pudo identificar al usuario'}), 403
+
+        # Solo permitir si es el mismo entrenador o si es admin
+        if usuario_actual.get('id') != entrenador_id and usuario_actual.get('rol') != 'admin':
+            return jsonify({'error': 'No autorizado. Solo puedes ver tus propios ejercicios'}), 403
+
+        # Obtener los ejercicios del entrenador específico
+        ejercicios = ejercicio_controller.obtener_por_entrenador(entrenador_id)
+
+        if not ejercicios:
+            return jsonify({
+                'mensaje': 'No se encontraron ejercicios para este entrenador',
+                'ejercicios': []
+            }), 200
+
+        return jsonify({
+            'mensaje': 'Ejercicios obtenidos correctamente',
+            'ejercicios': ejercicios,
+            'total': len(ejercicios)
+        }), 200
+
+    except Exception as e:
+        current_app.logger.error(f"Error al obtener ejercicios del entrenador {entrenador_id}: {str(e)}")
+        return jsonify({'error': 'Error interno del servidor', 'detalles': str(e)}), 500
