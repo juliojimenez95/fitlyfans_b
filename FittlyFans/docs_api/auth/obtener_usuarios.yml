@@ -1,0 +1,9 @@
+tags:
+  - Usuarios
+security:
+  - Bearer: []
+responses:
+  200:
+    description: Lista de usuarios
+  401:
+    description: Token inválido o expirado

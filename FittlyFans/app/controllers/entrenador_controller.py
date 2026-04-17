@@ -1,70 +1,46 @@
 from typing import List, Dict
-from app.controllers.base_controller import BaseController
+from app.models.db import DatabaseConnectionSingleton
+from app.repositories.entrenador_repository import EntrenadorRepository
+from app.repositories.usuario_repository import UsuarioRepository
 
-
-
-class EntrenadorController(BaseController):
+class EntrenadorController:
     """Controlador para la entidad Entrenador."""
     
-    
+    def __init__(self):
+        self.entrenador_repo = EntrenadorRepository()
+        self.usuario_repo = UsuarioRepository()
+        self.db = DatabaseConnectionSingleton()
+        
     def crear(self, usuario_id: int, especialidad: str = None, certificaciones: str = None) -> bool:
         """
-        Crea un nuevo entrenador a partir de un usuario existente.
-        
-        Args:
-            usuario_id: ID del usuario
-            especialidad: Especialidad del entrenador (opcional)
-            certificaciones: Certificaciones del entrenador (opcional)
+        Crea un nuevo entrenador a partir de un usuario existente garantizando
+        atomicidad mediante transacciones de Base de Datos.
+        """
+        try:
+            self.db.start_transaction()
             
-        Returns:
-            True si la creación fue exitosa, False en caso contrario
-        """
-        query = """
-        INSERT INTO Entrenador (id, especialidad, certificaciones)
-        VALUES (%s, %s, %s)
-        """
-        filas_afectadas = self._execute_update(query, (usuario_id, especialidad, certificaciones))
-        
-        # Actualizar tipo de usuario
-        if filas_afectadas > 0:
-            update_query = """
-            UPDATE Usuario SET tipo_usuario = 'entrenador' WHERE id = %s
-            """
-            self._execute_update(update_query, (usuario_id,))
-        
-        return filas_afectadas > 0
+            # Paso 1: Crear el registro del entrenador
+            filas_afectadas = self.entrenador_repo.crear_entrenador(usuario_id, especialidad, certificaciones)
+            
+            # Paso 2: Actualizar rol en la tabla Usuario
+            if filas_afectadas > 0:
+                self.usuario_repo.actualizar_tipo_usuario(usuario_id, 'entrenador')
+                
+            self.db.commit()
+            return filas_afectadas > 0
+            
+        except Exception as e:
+            self.db.rollback()
+            print(f"Error transaccional en crear entrenador: {e}")
+            raise e
     
     def obtener(self, entrenador_id: int) -> Dict:
-        """
-        Obtiene la información de un entrenador y su usuario asociado.
-        
-        Args:
-            entrenador_id: ID del entrenador
-            
-        Returns:
-            Información del entrenador o diccionario vacío si no se encuentra
-        """
-        query = """
-        SELECT u.*, e.especialidad, e.certificaciones 
-        FROM Entrenador e
-        JOIN Usuario u ON e.id = u.id
-        WHERE e.id = %s
-        """
-        resultados = self._execute_query(query, (entrenador_id,))
-        return resultados[0] if resultados else {}
+        """Obtiene la información de un entrenador y su usuario asociado."""
+        resultados = self.entrenador_repo.obtener_entrenador_con_usuario(entrenador_id)
+        return resultados if resultados else {}
     
     def actualizar(self, entrenador_id: int, especialidad: str = None, certificaciones: str = None) -> bool:
-        """
-        Actualiza los datos de un entrenador.
-        
-        Args:
-            entrenador_id: ID del entrenador
-            especialidad: Nueva especialidad (opcional)
-            certificaciones: Nuevas certificaciones (opcional)
-            
-        Returns:
-            True si la actualización fue exitosa, False en caso contrario
-        """
+        """Actualiza los datos de un entrenador."""
         actualizaciones = []
         valores = []
         
@@ -78,53 +54,23 @@ class EntrenadorController(BaseController):
         
         if not actualizaciones:
             return False
-        
+            
         set_clause = ", ".join(actualizaciones)
-        valores.append(entrenador_id)
         
-        query = f"UPDATE Entrenador SET {set_clause} WHERE id = %s"
-        filas_afectadas = self._execute_update(query, tuple(valores))
-        
-        return filas_afectadas > 0
+        try:
+            self.db.start_transaction()
+            filas_afectadas = self.entrenador_repo.actualizar_entrenador(entrenador_id, set_clause, valores)
+            self.db.commit()
+            return filas_afectadas > 0
+        except Exception as e:
+            self.db.rollback()
+            raise e
     
     def listar_todos(self, limite: int = 100, offset: int = 0) -> List[Dict]:
-        """
-        Lista todos los entrenadores con su información de usuario.
-        
-        Args:
-            limite: Número máximo de registros a devolver
-            offset: Número de registros a omitir
-            
-        Returns:
-            Lista de entrenadores
-        """
-        query = """
-        SELECT u.*, e.especialidad, e.certificaciones 
-        FROM Entrenador e
-        JOIN Usuario u ON e.id = u.id
-        ORDER BY u.id
-        LIMIT %s OFFSET %s
-        """
-        return self._execute_query(query, (limite, offset))
+        """Lista todos los entrenadores."""
+        return self.entrenador_repo.listar_todos(limite, offset)
     
     def buscar_por_especialidad(self, especialidad: str, limite: int = 100) -> List[Dict]:
-        """
-        Busca entrenadores por especialidad.
-        
-        Args:
-            especialidad: Especialidad a buscar
-            limite: Número máximo de resultados
-            
-        Returns:
-            Lista de entrenadores con la especialidad especificada
-        """
+        """Busca entrenadores por especialidad."""
         termino_busqueda = f"%{especialidad}%"
-        query = """
-        SELECT u.*, e.especialidad, e.certificaciones 
-        FROM Entrenador e
-        JOIN Usuario u ON e.id = u.id
-        WHERE e.especialidad LIKE %s
-        ORDER BY u.id
-        LIMIT %s
-        """
-        return self._execute_query(query, (termino_busqueda, limite))
+        return self.entrenador_repo.buscar_por_especialidad(termino_busqueda, limite)

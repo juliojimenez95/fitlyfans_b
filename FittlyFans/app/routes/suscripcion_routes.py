@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, request, jsonify
 from app.controllers.suscripcion_controller import SuscripcionController
 from app.utils.auth import token_required
@@ -8,6 +9,7 @@ suscripcion_controller = SuscripcionController()
 # Crear suscripción (seguir a alguien)
 @suscripcion_bp.route('', methods=['POST'])
 @token_required
+@swag_from('../../docs_api/suscripcion/seguir_usuario.yml')
 def seguir_usuario(*args, **kwargs):
     usuario_actual = kwargs['current_user']
     data = request.json
@@ -30,6 +32,7 @@ def seguir_usuario(*args, **kwargs):
 # Eliminar suscripción (dejar de seguir)
 @suscripcion_bp.route('', methods=['DELETE'])
 @token_required
+@swag_from('../../docs_api/suscripcion/dejar_de_seguir.yml')
 def dejar_de_seguir(*args, **kwargs):
     usuario_actual = kwargs['current_user']
     data = request.json
@@ -49,6 +52,7 @@ def dejar_de_seguir(*args, **kwargs):
 # Verificar si ya sigue a alguien
 @suscripcion_bp.route('/verificar', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/suscripcion/verificar_suscripcion.yml')
 def verificar_suscripcion(*args, **kwargs):
     usuario_actual = kwargs['current_user']
     id_seguido = request.args.get('id_seguido', type=int)
@@ -62,6 +66,7 @@ def verificar_suscripcion(*args, **kwargs):
 # Listar seguidores
 @suscripcion_bp.route('/<int:id_usuario>/seguidores', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/suscripcion/listar_seguidores.yml')
 def listar_seguidores(id_usuario, *args, **kwargs):
     seguidores = suscripcion_controller.listar_seguidores(id_usuario)
     return jsonify({
@@ -72,6 +77,7 @@ def listar_seguidores(id_usuario, *args, **kwargs):
 # Listar seguidos
 @suscripcion_bp.route('/<int:id_usuario>/seguidos', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/suscripcion/listar_seguidos.yml')
 def listar_seguidos(id_usuario, *args, **kwargs):
     seguidos = suscripcion_controller.listar_seguidos(id_usuario)
     return jsonify({
@@ -82,6 +88,7 @@ def listar_seguidos(id_usuario, *args, **kwargs):
 # Contar seguidores
 @suscripcion_bp.route('/<int:id_usuario>/seguidores/count', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/suscripcion/contar_seguidores.yml')
 def contar_seguidores(id_usuario, *args, **kwargs):
     total = suscripcion_controller.contar_seguidores(id_usuario)
     return jsonify({'total_seguidores': total}), 200
@@ -89,6 +96,7 @@ def contar_seguidores(id_usuario, *args, **kwargs):
 # Contar seguidos
 @suscripcion_bp.route('/<int:id_usuario>/seguidos/count', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/suscripcion/contar_seguidos.yml')
 def contar_seguidos(id_usuario, *args, **kwargs):
     total = suscripcion_controller.contar_seguidos(id_usuario)
     return jsonify({'total_seguidos': total}), 200
@@ -97,6 +105,7 @@ def contar_seguidos(id_usuario, *args, **kwargs):
 # Verificar si un usuario sigue a otro (recibe ambos IDs)
 @suscripcion_bp.route('/verificar/doble', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/suscripcion/verificar_suscripcion_doble.yml')
 def verificar_suscripcion_doble(*args, **kwargs):
     id_seguidor = request.args.get('id_seguidor', type=int)
     id_seguido = request.args.get('id_seguido', type=int)

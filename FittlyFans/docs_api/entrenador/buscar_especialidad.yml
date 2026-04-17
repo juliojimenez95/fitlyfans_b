@@ -1,0 +1,14 @@
+tags:
+  - Entrenadores
+security:
+  - Bearer: []
+parameters:
+  - name: especialidad
+    in: query
+    type: string
+    required: true
+responses:
+  200:
+    description: Lista de entrenadores encontrados
+  400:
+    description: Falta término de búsqueda

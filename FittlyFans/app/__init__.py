@@ -1,5 +1,6 @@
 from flask import Flask
-from flask_cors import CORS  
+from flask_cors import CORS
+from flasgger import Swagger
 from app.config import Config
 from app.models import db
 import os
@@ -16,6 +17,30 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    # Configuración de Swagger
+    app.config['SWAGGER'] = {
+        'title': 'FitlyFans API',
+        'uiversion': 3,
+        'version': '1.0',
+        'description': 'Documentación interactiva de la API Backend de FitlyFans'
+    }
+    Swagger(app, template={
+        "swagger": "2.0",
+        "info": {
+            "title": "FitlyFans API",
+            "description": "API REST para FitlyFans",
+            "version": "1.0.0"
+        },
+        "securityDefinitions": {
+            "Bearer": {
+                "type": "apiKey",
+                "name": "Authorization",
+                "in": "header",
+                "description": "Escribe 'Bearer <token>' en el valor."
+            }
+        },
+    })
 
     CORS(app) 
 

@@ -1,0 +1,24 @@
+tags:
+  - Usuarios
+security:
+  - Bearer: []
+parameters:
+  - name: usuario_id
+    in: path
+    type: integer
+    required: true
+  - in: body
+    name: body
+    required: true
+    schema:
+      type: object
+      properties:
+        nombre:
+          type: string
+        correo:
+          type: string
+responses:
+  200:
+    description: Usuario actualizado
+  400:
+    description: Datos inválidos

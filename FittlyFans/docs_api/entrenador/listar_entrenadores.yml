@@ -1,0 +1,16 @@
+tags:
+  - Entrenadores
+security:
+  - Bearer: []
+parameters:
+  - name: limite
+    in: query
+    type: integer
+    default: 100
+  - name: offset
+    in: query
+    type: integer
+    default: 0
+responses:
+  200:
+    description: Lista de entrenadores

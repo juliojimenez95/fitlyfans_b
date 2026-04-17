@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, request, jsonify
 from app.controllers.comentario_controller import ComentarioController
 from app.utils.auth import token_required
@@ -7,6 +8,7 @@ comentario_controller = ComentarioController()
 
 @comentario_bp.route('', methods=['POST'])
 @token_required
+@swag_from('../../docs_api/comentario/crear_comentario.yml')
 def crear_comentario(*args, **kwargs):
     data = request.get_json()
     id_usuario = data.get("id_usuario")
@@ -18,12 +20,14 @@ def crear_comentario(*args, **kwargs):
 
 @comentario_bp.route('/<int:comentario_id>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/comentario/obtener_comentario.yml')
 def obtener_comentario(comentario_id, *args, **kwargs):
     comentario = comentario_controller.obtener(comentario_id)
     return jsonify(comentario), 200 if comentario else 404
 
 @comentario_bp.route('/<int:comentario_id>', methods=['PUT'])
 @token_required
+@swag_from('../../docs_api/comentario/actualizar_comentario.yml')
 def actualizar_comentario(comentario_id, *args, **kwargs):
     data = request.get_json()
     descripcion = data.get("descripcion")
@@ -32,18 +36,21 @@ def actualizar_comentario(comentario_id, *args, **kwargs):
 
 @comentario_bp.route('/<int:comentario_id>', methods=['DELETE'])
 @token_required
+@swag_from('../../docs_api/comentario/eliminar_comentario.yml')
 def eliminar_comentario(comentario_id, *args, **kwargs):
     exito = comentario_controller.eliminar(comentario_id)
     return jsonify({"eliminado": exito}), 200 if exito else 400
 
 @comentario_bp.route('/contenido/<int:id_contenido>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/comentario/listar_comentarios_por_contenido.yml')
 def listar_comentarios_por_contenido(id_contenido, *args, **kwargs):
     comentarios = comentario_controller.listar_por_contenido(id_contenido)
     return jsonify(comentarios), 200
 
 @comentario_bp.route('/usuario/<int:id_usuario>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/comentario/listar_comentarios_por_usuario.yml')
 def listar_comentarios_por_usuario(id_usuario, *args, **kwargs):
     limite = int(request.args.get("limite", 50))
     comentarios = comentario_controller.listar_por_usuario(id_usuario, limite)

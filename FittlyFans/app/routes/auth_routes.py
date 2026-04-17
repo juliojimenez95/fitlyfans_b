@@ -4,11 +4,13 @@ import datetime
 from functools import wraps
 from app.config import Config
 from app.controllers.usuario_controller import UsuarioController
+from flasgger import swag_from
 
 auth_bp = Blueprint('auth', __name__)
 usuario_controller = UsuarioController()
 
 @auth_bp.route('/login', methods=['POST'])
+@swag_from('../../docs_api/auth/login.yml')
 def login():
     """Inicia sesión y genera un token JWT."""
     data = request.json
@@ -42,6 +44,7 @@ def login():
     }), 200
 
 @auth_bp.route('/register', methods=['POST'])
+@swag_from('../../docs_api/auth/register.yml')
 def register():
     """Registra un nuevo usuario y genera un token JWT."""
     data = request.json
@@ -120,14 +123,18 @@ def token_required(f):
 
 @auth_bp.route('/usuarios', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/auth/obtener_usuarios.yml')
 def obtener_usuarios():
+    """Obtiene la lista de todos los usuarios"""
     usuarios = usuario_controller.listar_todos()
     return jsonify(usuarios), 200
 
 
 @auth_bp.route('/usuarios/<int:usuario_id>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/auth/obtener_usuario.yml')
 def obtener_usuario(usuario_id):
+    """Obtiene los detalles de un usuario específico"""
     usuario = usuario_controller.obtener_por_id(usuario_id)
     if not usuario:
         return jsonify({'error': 'Usuario no encontrado'}), 404
@@ -135,7 +142,9 @@ def obtener_usuario(usuario_id):
 
 @auth_bp.route('/usuarios/<int:usuario_id>', methods=['PUT'])
 @token_required
+@swag_from('../../docs_api/auth/actualizar_usuario.yml')
 def actualizar_usuario(usuario_id):
+    """Actualiza la información básica del usuario"""
     data = request.json
     if not data:
         return jsonify({'error': 'Datos vacíos'}), 400
@@ -149,7 +158,9 @@ def actualizar_usuario(usuario_id):
 
 @auth_bp.route('/usuarios/<int:usuario_id>', methods=['DELETE'])
 @token_required
+@swag_from('../../docs_api/auth/eliminar_usuario.yml')
 def eliminar_usuario(usuario_id):
+    """Elimina un usuario del sistema atómicamente"""
     eliminado = usuario_controller.eliminar(usuario_id)
     if not eliminado:
         return jsonify({'error': 'No se pudo eliminar el usuario'}), 500

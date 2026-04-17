@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, request, jsonify
 from app.controllers.suscriptor_controller import SuscriptorController
 from app.utils.auth import token_required
@@ -9,6 +10,7 @@ suscriptor_controller = SuscriptorController()
 # Ruta para crear un nuevo perfil de suscriptor
 @suscriptor_bp.route('', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/suscriptor/crear_suscriptor.yml')
 def crear_suscriptor(*args, **kwargs):
     usuario_actual = kwargs['current_user']
     data = request.json
@@ -43,6 +45,7 @@ def crear_suscriptor(*args, **kwargs):
 # Ruta para obtener un suscriptor por su ID
 @suscriptor_bp.route('/<int:suscriptor_id>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/suscriptor/obtener_suscriptor.yml')
 def obtener_suscriptor(suscriptor_id, *args, **kwargs):
     suscriptor = suscriptor_controller.obtener(suscriptor_id)
 
@@ -54,6 +57,7 @@ def obtener_suscriptor(suscriptor_id, *args, **kwargs):
 # Ruta para actualizar un suscriptor
 @suscriptor_bp.route('/<int:suscriptor_id>', methods=['PUT'])
 @token_required
+@swag_from('../../docs_api/suscriptor/actualizar_suscriptor.yml')
 def actualizar_suscriptor(suscriptor_id, *args, **kwargs):
     usuario_actual = kwargs['current_user']
 
@@ -86,6 +90,7 @@ def actualizar_suscriptor(suscriptor_id, *args, **kwargs):
 # Ruta para listar todos los suscriptores (solo admin o entrenador)
 @suscriptor_bp.route('/listar', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/suscriptor/listar_suscriptores.yml')
 def listar_suscriptores(*args, **kwargs):
     usuario_actual = kwargs['current_user']
 

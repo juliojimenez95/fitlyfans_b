@@ -1,0 +1,35 @@
+tags:
+  - Autenticación
+consumes:
+  - application/json
+parameters:
+  - in: body
+    name: credenciales
+    description: Correo y contraseña del usuario
+    required: true
+    schema:
+      type: object
+      required:
+        - correo
+        - contrasena
+      properties:
+        correo:
+          type: string
+          example: usuario@fitlyfans.com
+        contrasena:
+          type: string
+          example: mipassword123
+responses:
+  200:
+    description: Login exitoso. Retorna el token JWT.
+    schema:
+      type: object
+      properties:
+        token:
+          type: string
+        usuario:
+          type: object
+  400:
+    description: Faltan datos en la petición
+  401:
+    description: Credenciales inválidas

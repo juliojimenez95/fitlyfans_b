@@ -1,0 +1,9 @@
+tags:
+  - Rutina
+security:
+  - Bearer: []
+responses:
+  200:
+    description: Operación exitosa (Autogenerado)
+  401:
+    description: No autorizado

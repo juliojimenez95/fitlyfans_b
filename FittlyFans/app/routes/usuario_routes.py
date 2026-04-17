@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, request, jsonify
 import jwt
 import datetime
@@ -8,6 +9,7 @@ auth_bp = Blueprint('auth', __name__)
 usuario_controller = UsuarioController()
 
 @auth_bp.route('/login', methods=['POST'])
+@swag_from('../../docs_api/usuario/login.yml')
 def login():
     """Inicia sesión y genera un token JWT."""
     data = request.json
@@ -41,6 +43,7 @@ def login():
     }), 200
 
 @auth_bp.route('/register', methods=['POST'])
+@swag_from('../../docs_api/usuario/register.yml')
 def register():
     """Registra un nuevo usuario y genera un token JWT."""
     data = request.json

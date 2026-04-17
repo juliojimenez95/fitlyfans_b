@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, request, jsonify
 from app.controllers.conversacion_controller import MensajeController, ConversacionController
 from app.utils.auth import token_required
@@ -9,6 +10,7 @@ conversacion_controller = ConversacionController()
 # Rutas para conversaciones
 @mensajes_bp.route('/conversaciones', methods=['POST'])
 @token_required
+@swag_from('../../docs_api/conversacion/crear_conversacion.yml')
 def crear_conversacion(*args, **kwargs):
     """Crea una nueva conversación."""
     data = request.json
@@ -39,6 +41,7 @@ def crear_conversacion(*args, **kwargs):
 
 @mensajes_bp.route('/conversaciones/suscriptor/<int:suscriptor_id>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/conversacion/listar_conversaciones_suscriptor.yml')
 def listar_conversaciones_suscriptor(usuario_actual, suscriptor_id):
     """Lista todas las conversaciones de un suscriptor."""
     limite = int(request.args.get('limite', 50))
@@ -57,6 +60,7 @@ def listar_conversaciones_suscriptor(usuario_actual, suscriptor_id):
 
 @mensajes_bp.route('/conversaciones/entrenador/<int:entrenador_id>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/conversacion/listar_conversaciones_entrenador.yml')
 def listar_conversaciones_entrenador(usuario_actual, entrenador_id):
     """Lista todas las conversaciones de un entrenador."""
     limite = int(request.args.get('limite', 50))
@@ -75,6 +79,7 @@ def listar_conversaciones_entrenador(usuario_actual, entrenador_id):
 
 @mensajes_bp.route('/conversaciones/<int:conversacion_id>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/conversacion/obtener_conversacion.yml')
 def obtener_conversacion(usuario_actual, conversacion_id):
     """Obtiene los detalles de una conversación."""
     conversacion = conversacion_controller.obtener_por_id(conversacion_id)
@@ -88,6 +93,7 @@ def obtener_conversacion(usuario_actual, conversacion_id):
 
 @mensajes_bp.route('/conversaciones/<int:conversacion_id>/estado', methods=['PUT'])
 @token_required
+@swag_from('../../docs_api/conversacion/actualizar_estado_conversacion.yml')
 def actualizar_estado_conversacion(usuario_actual, conversacion_id):
     """Actualiza el estado de una conversación."""
     data = request.json
@@ -110,6 +116,7 @@ def actualizar_estado_conversacion(usuario_actual, conversacion_id):
 
 @mensajes_bp.route('/conversaciones/<int:conversacion_id>', methods=['DELETE'])
 @token_required
+@swag_from('../../docs_api/conversacion/eliminar_conversacion.yml')
 def eliminar_conversacion(usuario_actual, conversacion_id):
     """Elimina una conversación."""
     eliminado = conversacion_controller.eliminar(conversacion_id)
@@ -124,6 +131,7 @@ def eliminar_conversacion(usuario_actual, conversacion_id):
 # Rutas para mensajes
 @mensajes_bp.route('/mensajes', methods=['POST'])
 @token_required
+@swag_from('../../docs_api/conversacion/crear_mensaje.yml')
 def crear_mensaje(usuario_actual):
     """Crea un nuevo mensaje."""
     data = request.json
@@ -157,6 +165,7 @@ def crear_mensaje(usuario_actual):
 
 @mensajes_bp.route('/conversaciones/<int:conversacion_id>/mensajes', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/conversacion/listar_mensajes.yml')
 def listar_mensajes(usuario_actual, conversacion_id):
     """Lista todos los mensajes de una conversación."""
     limite = int(request.args.get('limite', 100))
@@ -180,6 +189,7 @@ def listar_mensajes(usuario_actual, conversacion_id):
 
 @mensajes_bp.route('/conversaciones/<int:conversacion_id>/marcar-leidos', methods=['PUT'])
 @token_required
+@swag_from('../../docs_api/conversacion/marcar_mensajes_leidos.yml')
 def marcar_mensajes_leidos(usuario_actual, conversacion_id):
     """Marca como leídos todos los mensajes no enviados por el usuario actual."""
     mensajes_actualizados = mensaje_controller.marcar_como_leidos(
@@ -194,6 +204,7 @@ def marcar_mensajes_leidos(usuario_actual, conversacion_id):
 
 @mensajes_bp.route('/mensajes/no-leidos', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/conversacion/contar_mensajes_no_leidos.yml')
 def contar_mensajes_no_leidos(usuario_actual):
     """Cuenta el número de mensajes no leídos del usuario actual."""
     total = mensaje_controller.contar_no_leidos(usuario_actual['id'])
@@ -204,6 +215,7 @@ def contar_mensajes_no_leidos(usuario_actual):
 
 @mensajes_bp.route('/mensajes/<int:mensaje_id>', methods=['DELETE'])
 @token_required
+@swag_from('../../docs_api/conversacion/eliminar_mensaje.yml')
 def eliminar_mensaje(usuario_actual, mensaje_id):
     """Elimina un mensaje."""
     # Verificar que el mensaje existe y pertenece al usuario

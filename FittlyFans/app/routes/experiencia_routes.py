@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, request, jsonify
 from app.controllers.experiencia_controller import ExperienciaController
 from app.utils.auth import token_required
@@ -8,6 +9,7 @@ experiencia_controller = ExperienciaController()
 # Crear una nueva experiencia
 @experiencia_bp.route('', methods=['POST'])
 @token_required
+@swag_from('../../docs_api/experiencia/crear_experiencia.yml')
 def crear_experiencia(*args, **kwargs):
     data = request.json
     nombre = data.get('nombre')
@@ -22,6 +24,7 @@ def crear_experiencia(*args, **kwargs):
 # Obtener experiencia por ID
 @experiencia_bp.route('/<int:id_experiencia>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/experiencia/obtener_experiencia.yml')
 def obtener_experiencia(id_experiencia, *args, **kwargs):
     experiencia = experiencia_controller.obtener(id_experiencia)
     if not experiencia:
@@ -31,6 +34,7 @@ def obtener_experiencia(id_experiencia, *args, **kwargs):
 # Actualizar experiencia
 @experiencia_bp.route('/<int:id_experiencia>', methods=['PUT'])
 @token_required
+@swag_from('../../docs_api/experiencia/actualizar_experiencia.yml')
 def actualizar_experiencia(id_experiencia, *args, **kwargs):
     data = request.json
     nombre = data.get('nombre')
@@ -45,6 +49,7 @@ def actualizar_experiencia(id_experiencia, *args, **kwargs):
 # Eliminar experiencia
 @experiencia_bp.route('/<int:id_experiencia>', methods=['DELETE'])
 @token_required
+@swag_from('../../docs_api/experiencia/eliminar_experiencia.yml')
 def eliminar_experiencia(id_experiencia, *args, **kwargs):
     eliminado = experiencia_controller.eliminar(id_experiencia)
     if not eliminado:
@@ -54,6 +59,7 @@ def eliminar_experiencia(id_experiencia, *args, **kwargs):
 # Listar todas las experiencias
 @experiencia_bp.route('', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/experiencia/listar_experiencias.yml')
 def listar_experiencias(*args, **kwargs):
     experiencias = experiencia_controller.listar_todas()
     return jsonify({'total': len(experiencias), 'experiencias': experiencias}), 200
@@ -61,6 +67,7 @@ def listar_experiencias(*args, **kwargs):
 # Buscar experiencias
 @experiencia_bp.route('/buscar', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/experiencia/buscar_experiencias.yml')
 def buscar_experiencias(*args, **kwargs):
     termino = request.args.get('termino', '')
     resultados = experiencia_controller.buscar(termino)

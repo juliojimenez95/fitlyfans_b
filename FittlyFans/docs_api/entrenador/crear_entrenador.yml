@@ -1,0 +1,22 @@
+tags:
+  - Entrenadores
+security:
+  - Bearer: []
+parameters:
+  - in: body
+    name: body
+    required: true
+    schema:
+      type: object
+      properties:
+        usuario_id:
+          type: integer
+        especialidad:
+          type: string
+        certificaciones:
+          type: string
+responses:
+  201:
+    description: Perfil creado
+  409:
+    description: Ya es entrenador

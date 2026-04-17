@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, request, jsonify
 from app.controllers.mensaje_Controller import MensajeController
 from app.utils.auth import token_required
@@ -8,6 +9,7 @@ mensaje_controller = MensajeController()
 # Crear un nuevo mensaje
 @mensaje_bp.route('', methods=['POST'])
 @token_required
+@swag_from('../../docs_api/mensaje/crear_mensaje.yml')
 def crear_mensaje(current_user):
     data = request.json
     suscriptor_id = data.get('suscriptor_id')
@@ -34,6 +36,7 @@ def crear_mensaje(current_user):
 # Obtener mensaje por ID
 @mensaje_bp.route('/<int:mensaje_id>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/mensaje/obtener_mensaje.yml')
 def obtener_mensaje(current_user, mensaje_id):
     mensaje = mensaje_controller.obtener(mensaje_id)
     if not mensaje:
@@ -50,6 +53,7 @@ def obtener_mensaje(current_user, mensaje_id):
 # Listar mensajes entre un suscriptor y entrenador específicos
 @mensaje_bp.route('/entrenador/<int:entrenador_id>/suscriptor/<int:suscriptor_id>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/mensaje/listar_mensajes.yml')
 def listar_mensajes(current_user, entrenador_id, suscriptor_id):
     # Verificar que el usuario tenga permiso para ver estos mensajes
     if current_user['tipo_usuario'] == 'suscriptor' and current_user['id'] != suscriptor_id:
@@ -73,6 +77,7 @@ def listar_mensajes(current_user, entrenador_id, suscriptor_id):
 # Marcar mensaje como leído
 @mensaje_bp.route('/<int:mensaje_id>/leido', methods=['PUT'])
 @token_required
+@swag_from('../../docs_api/mensaje/marcar_mensaje_leido.yml')
 def marcar_mensaje_leido(current_user, mensaje_id):
     mensaje = mensaje_controller.obtener(mensaje_id)
     if not mensaje:
@@ -93,6 +98,7 @@ def marcar_mensaje_leido(current_user, mensaje_id):
 # Marcar todos los mensajes como leídos para un suscriptor y entrenador específicos
 @mensaje_bp.route('/entrenador/<int:entrenador_id>/suscriptor/<int:suscriptor_id>/leidos', methods=['PUT'])
 @token_required
+@swag_from('../../docs_api/mensaje/marcar_todos_leidos.yml')
 def marcar_todos_leidos(current_user, entrenador_id, suscriptor_id):
     # Verificar que el usuario tenga permiso para marcar estos mensajes
     if current_user['tipo_usuario'] == 'suscriptor' and current_user['id'] != suscriptor_id:
@@ -110,6 +116,7 @@ def marcar_todos_leidos(current_user, entrenador_id, suscriptor_id):
 # Contar mensajes no leídos para el usuario actual
 @mensaje_bp.route('/no-leidos/contador', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/mensaje/contar_mensajes_no_leidos.yml')
 def contar_mensajes_no_leidos(current_user):
     if current_user['tipo_usuario'] == 'suscriptor':
         total = mensaje_controller.contar_no_leidos_suscriptor(current_user['id'])
@@ -121,6 +128,7 @@ def contar_mensajes_no_leidos(current_user):
 # Eliminar un mensaje
 @mensaje_bp.route('/<int:mensaje_id>', methods=['DELETE'])
 @token_required
+@swag_from('../../docs_api/mensaje/eliminar_mensaje.yml')
 def eliminar_mensaje(current_user, mensaje_id):
     mensaje = mensaje_controller.obtener(mensaje_id)
     

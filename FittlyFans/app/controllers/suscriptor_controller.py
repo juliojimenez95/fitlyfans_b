@@ -1,68 +1,46 @@
 from typing import List, Dict
-from app.controllers.base_controller import BaseController
+from app.models.db import DatabaseConnectionSingleton
+from app.repositories.suscriptor_repository import SuscriptorRepository
+from app.repositories.usuario_repository import UsuarioRepository
 
-
-class SuscriptorController(BaseController):
+class SuscriptorController:
     """Controlador para la entidad Suscriptor."""
     
+    def __init__(self):
+        self.suscriptor_repo = SuscriptorRepository()
+        self.usuario_repo = UsuarioRepository()
+        self.db = DatabaseConnectionSingleton()
+        
     def crear(self, usuario_id: int, objetivo: str = None, nivel_fitness: str = None) -> bool:
         """
-        Crea un nuevo suscriptor a partir de un usuario existente.
-        
-        Args:
-            usuario_id: ID del usuario
-            objetivo: Objetivo del suscriptor (opcional)
-            nivel_fitness: Nivel de fitness (opcional)
+        Crea un nuevo suscriptor a partir de un usuario existente garantizando
+        atomicidad mediante transacciones de Base de Datos.
+        """
+        try:
+            self.db.start_transaction()
             
-        Returns:
-            True si la creación fue exitosa, False en caso contrario
-        """
-        query = """
-        INSERT INTO Suscriptor (id, objetivo, nivel_fitness)
-        VALUES (%s, %s, %s)
-        """
-        filas_afectadas = self._execute_update(query, (usuario_id, objetivo, nivel_fitness))
-        
-        # Actualizar tipo de usuario
-        if filas_afectadas > 0:
-            update_query = """
-            UPDATE Usuario SET tipo_usuario = 'suscriptor' WHERE id = %s
-            """
-            self._execute_update(update_query, (usuario_id,))
-        
-        return filas_afectadas > 0
+            # Paso 1: Crear el registro del suscriptor
+            filas_afectadas = self.suscriptor_repo.crear_suscriptor(usuario_id, objetivo, nivel_fitness)
+            
+            # Paso 2: Actualizar rol en la tabla Usuario
+            if filas_afectadas > 0:
+                self.usuario_repo.actualizar_tipo_usuario(usuario_id, 'suscriptor')
+                
+            self.db.commit()
+            return filas_afectadas > 0
+            
+        except Exception as e:
+            self.db.rollback()
+            print(f"Error transaccional en crear suscriptor: {e}")
+            raise e
     
     def obtener(self, suscriptor_id: int) -> Dict:
-        """
-        Obtiene la información de un suscriptor y su usuario asociado.
-        
-        Args:
-            suscriptor_id: ID del suscriptor
-            
-        Returns:
-            Información del suscriptor o diccionario vacío si no se encuentra
-        """
-        query = """
-        SELECT u.*, s.objetivo, s.nivel_fitness 
-        FROM Suscriptor s
-        JOIN Usuario u ON s.id = u.id
-        WHERE s.id = %s
-        """
-        resultados = self._execute_query(query, (suscriptor_id,))
-        return resultados[0] if resultados else {}
+        """Obtiene la información de un suscriptor y su usuario asociado."""
+        resultados = self.suscriptor_repo.obtener_suscriptor_con_usuario(suscriptor_id)
+        return resultados if resultados else {}
     
     def actualizar(self, suscriptor_id: int, objetivo: str = None, nivel_fitness: str = None) -> bool:
-        """
-        Actualiza los datos de un suscriptor.
-        
-        Args:
-            suscriptor_id: ID del suscriptor
-            objetivo: Nuevo objetivo (opcional)
-            nivel_fitness: Nuevo nivel de fitness (opcional)
-            
-        Returns:
-            True si la actualización fue exitosa, False en caso contrario
-        """
+        """Actualiza los datos de un suscriptor."""
         actualizaciones = []
         valores = []
         
@@ -76,52 +54,22 @@ class SuscriptorController(BaseController):
         
         if not actualizaciones:
             return False
-        
+            
         set_clause = ", ".join(actualizaciones)
-        valores.append(suscriptor_id)
         
-        query = f"UPDATE Suscriptor SET {set_clause} WHERE id = %s"
-        filas_afectadas = self._execute_update(query, tuple(valores))
-        
-        return filas_afectadas > 0
+        try:
+            self.db.start_transaction()
+            filas_afectadas = self.suscriptor_repo.actualizar_suscriptor(suscriptor_id, set_clause, valores)
+            self.db.commit()
+            return filas_afectadas > 0
+        except Exception as e:
+            self.db.rollback()
+            raise e
     
     def listar_todos(self, limite: int = 100, offset: int = 0) -> List[Dict]:
-        """
-        Lista todos los suscriptores con su información de usuario.
-        
-        Args:
-            limite: Número máximo de registros a devolver
-            offset: Número de registros a omitir
-            
-        Returns:
-            Lista de suscriptores
-        """
-        query = """
-        SELECT u.*, s.objetivo, s.nivel_fitness 
-        FROM Suscriptor s
-        JOIN Usuario u ON s.id = u.id
-        ORDER BY u.id
-        LIMIT %s OFFSET %s
-        """
-        return self._execute_query(query, (limite, offset))
+        """Lista todos los suscriptores."""
+        return self.suscriptor_repo.listar_todos(limite, offset)
     
     def buscar_por_nivel(self, nivel: str, limite: int = 100) -> List[Dict]:
-        """
-        Busca suscriptores por nivel de fitness.
-        
-        Args:
-            nivel: Nivel de fitness a buscar
-            limite: Número máximo de resultados
-            
-        Returns:
-            Lista de suscriptores con el nivel especificado
-        """
-        query = """
-        SELECT u.*, s.objetivo, s.nivel_fitness 
-        FROM Suscriptor s
-        JOIN Usuario u ON s.id = u.id
-        WHERE s.nivel_fitness = %s
-        ORDER BY u.id
-        LIMIT %s
-        """
-        return self._execute_query(query, (nivel, limite))
+        """Busca suscriptores por nivel de fitness."""
+        return self.suscriptor_repo.buscar_por_nivel(nivel, limite)

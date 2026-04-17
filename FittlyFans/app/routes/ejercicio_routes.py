@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, request, jsonify,send_from_directory
 from app.controllers.ejercicio_controller import EjercicioController
 from app.utils.auth import token_required
@@ -26,6 +27,7 @@ def allowed_video_file(filename):
 # Modificación de la ruta para manejar la subida de archivos
 @ejercicio_bp.route('', methods=['POST'])
 @token_required
+@swag_from('../../docs_api/ejercicio/crear_ejercicio.yml')
 def crear_ejercicio(*args, **kwargs):
     try:
         # Obtener el usuario autenticado desde el decorador
@@ -86,12 +88,14 @@ def crear_ejercicio(*args, **kwargs):
 
 # Añadir una ruta para servir los videos
 @ejercicio_bp.route('/videos/<path:filename>')
+@swag_from('../../docs_api/ejercicio/serve_video.yml')
 def serve_video(filename):
     return send_from_directory(os.path.join(current_app.root_path, 'uploads', 'videos'), filename)
 
 # Obtener ejercicio por ID
 @ejercicio_bp.route('/<int:ejercicio_id>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/ejercicio/obtener_ejercicio.yml')
 def obtener_ejercicio(ejercicio_id, *args, **kwargs):
     ejercicio = ejercicio_controller.obtener(ejercicio_id)
     if not ejercicio:
@@ -101,6 +105,7 @@ def obtener_ejercicio(ejercicio_id, *args, **kwargs):
 # Actualizar ejercicio
 @ejercicio_bp.route('/<int:ejercicio_id>', methods=['PUT'])
 @token_required
+@swag_from('../../docs_api/ejercicio/actualizar_ejercicio.yml')
 def actualizar_ejercicio(ejercicio_id, *args, **kwargs):
     datos = request.json
     actualizado = ejercicio_controller.actualizar(ejercicio_id, datos)
@@ -111,6 +116,7 @@ def actualizar_ejercicio(ejercicio_id, *args, **kwargs):
 # Eliminar ejercicio
 @ejercicio_bp.route('/<int:ejercicio_id>', methods=['DELETE'])
 @token_required
+@swag_from('../../docs_api/ejercicio/eliminar_ejercicio.yml')
 def eliminar_ejercicio(ejercicio_id, *args, **kwargs):
     eliminado = ejercicio_controller.eliminar(ejercicio_id)
     if not eliminado:
@@ -120,6 +126,7 @@ def eliminar_ejercicio(ejercicio_id, *args, **kwargs):
 # Listar todos los ejercicios con paginación
 @ejercicio_bp.route('', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/ejercicio/listar_ejercicios.yml')
 def listar_ejercicios(*args, **kwargs):
     limite = int(request.args.get('limite', 100))
     offset = int(request.args.get('offset', 0))
@@ -129,6 +136,7 @@ def listar_ejercicios(*args, **kwargs):
 # Buscar ejercicios
 @ejercicio_bp.route('/buscar', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/ejercicio/buscar_ejercicios.yml')
 def buscar_ejercicios(*args, **kwargs):
     termino = request.args.get('termino', '')
     limite = int(request.args.get('limite', 100))
@@ -138,6 +146,7 @@ def buscar_ejercicios(*args, **kwargs):
 # Listar ejercicios por grupo muscular
 @ejercicio_bp.route('/grupo/<string:grupo_muscular>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/ejercicio/listar_por_grupo_muscular.yml')
 def listar_por_grupo_muscular(grupo_muscular, *args, **kwargs):
     ejercicios = ejercicio_controller.listar_por_grupo_muscular(grupo_muscular)
     return jsonify({'total': len(ejercicios), 'ejercicios': ejercicios}), 200
@@ -145,6 +154,7 @@ def listar_por_grupo_muscular(grupo_muscular, *args, **kwargs):
 # Listar ejercicios por tipo
 @ejercicio_bp.route('/tipo/<string:tipo>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/ejercicio/listar_por_tipo.yml')
 def listar_por_tipo(tipo, *args, **kwargs):
     ejercicios = ejercicio_controller.listar_por_tipo(tipo)
     return jsonify({'total': len(ejercicios), 'ejercicios': ejercicios}), 200
@@ -152,6 +162,7 @@ def listar_por_tipo(tipo, *args, **kwargs):
 # Agregar ejercicio a una rutina
 @ejercicio_bp.route('/rutina', methods=['POST'])
 @token_required
+@swag_from('../../docs_api/ejercicio/agregar_a_rutina.yml')
 def agregar_a_rutina(*args, **kwargs):
     data = request.json
     id_rutina = data.get('id_rutina')
@@ -172,6 +183,7 @@ def agregar_a_rutina(*args, **kwargs):
 # Ruta para obtener los ejercicios del entrenador autenticado
 @ejercicio_bp.route('', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/ejercicio/obtener_ejercicios_entrenador.yml')
 def obtener_ejercicios_entrenador(*args, **kwargs):
     try:
         # Obtener el usuario autenticado desde el decorador
@@ -212,6 +224,7 @@ def obtener_ejercicios_entrenador(*args, **kwargs):
 # (útil si necesitas obtener ejercicios de otro entrenador, solo para admin)
 @ejercicio_bp.route('/entrenador/<int:entrenador_id>', methods=['GET'])
 @token_required
+@swag_from('../../docs_api/ejercicio/obtener_ejercicios_por_entrenador_id.yml')
 def obtener_ejercicios_por_entrenador_id(entrenador_id, *args, **kwargs):
     try:
         # Obtener el usuario autenticado desde el decorador

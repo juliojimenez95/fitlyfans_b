@@ -1,0 +1,14 @@
+tags:
+  - Usuarios
+security:
+  - Bearer: []
+parameters:
+  - name: usuario_id
+    in: path
+    type: integer
+    required: true
+responses:
+  200:
+    description: Usuario eliminado correctamente
+  500:
+    description: Fallo en base de datos

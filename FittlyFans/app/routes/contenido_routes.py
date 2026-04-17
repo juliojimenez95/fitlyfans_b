@@ -1,3 +1,4 @@
+from flasgger import swag_from
 from flask import Blueprint, request, jsonify
 from app.controllers.contenido_controller import ContenidoController
 from app.utils.auth import token_required
@@ -7,6 +8,7 @@ contenido_controller = ContenidoController()
 
 @contenido_bp.route("/contenidos", methods=["POST"])
 @token_required
+@swag_from('../../docs_api/contenido/crear_contenido.yml')
 def crear_contenido():
     data = request.get_json()
     id_usuario = data.get("id_usuario")
@@ -18,12 +20,14 @@ def crear_contenido():
 
 @contenido_bp.route("/contenidos/<int:contenido_id>", methods=["GET"])
 @token_required
+@swag_from('../../docs_api/contenido/obtener_contenido.yml')
 def obtener_contenido(contenido_id):
     contenido = contenido_controller.obtener(contenido_id)
     return jsonify(contenido), 200 if contenido else 404
 
 @contenido_bp.route("/contenidos/<int:contenido_id>", methods=["PUT"])
 @token_required
+@swag_from('../../docs_api/contenido/actualizar_contenido.yml')
 def actualizar_contenido(contenido_id):
     data = request.get_json()
     descripcion = data.get("descripcion")
@@ -32,12 +36,14 @@ def actualizar_contenido(contenido_id):
 
 @contenido_bp.route("/contenidos/<int:contenido_id>", methods=["DELETE"])
 @token_required
+@swag_from('../../docs_api/contenido/eliminar_contenido.yml')
 def eliminar_contenido(contenido_id):
     exito = contenido_controller.eliminar(contenido_id)
     return jsonify({"eliminado": exito}), 200 if exito else 400
 
 @contenido_bp.route("/contenidos/usuario/<int:id_usuario>", methods=["GET"])
 @token_required
+@swag_from('../../docs_api/contenido/listar_contenidos_por_usuario.yml')
 def listar_contenidos_por_usuario(id_usuario):
     limite = int(request.args.get("limite", 50))
     offset = int(request.args.get("offset", 0))
@@ -46,6 +52,7 @@ def listar_contenidos_por_usuario(id_usuario):
 
 @contenido_bp.route("/contenidos/tipo/<string:tipo>", methods=["GET"])
 @token_required
+@swag_from('../../docs_api/contenido/listar_contenidos_por_tipo.yml')
 def listar_contenidos_por_tipo(tipo):
     limite = int(request.args.get("limite", 50))
     contenidos = contenido_controller.listar_por_tipo(tipo, limite)
@@ -53,6 +60,7 @@ def listar_contenidos_por_tipo(tipo):
 
 @contenido_bp.route("/contenidos/buscar", methods=["GET"])
 @token_required
+@swag_from('../../docs_api/contenido/buscar_contenidos.yml')
 def buscar_contenidos():
     termino = request.args.get("termino", "")
     limite = int(request.args.get("limite", 50))

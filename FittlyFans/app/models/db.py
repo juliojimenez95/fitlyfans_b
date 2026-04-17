@@ -47,7 +47,7 @@ class DatabaseConnectionSingleton:
                     return True
             except Error as e:
                 print(f"Error al conectar a MySQL: {e}")
-                return False
+                raise e
         return True
     
     def disconnect(self):
@@ -58,35 +58,50 @@ class DatabaseConnectionSingleton:
             self.cursor = None
             self.connection = None
             print("Conexión cerrada")
+            
+    def start_transaction(self):
+        """Inicia una transacción explícita."""
+        self.connect()
+        self.connection.start_transaction()
+        
+    def commit(self):
+        """Confirma la transacción actual."""
+        if self.connection and self.connection.is_connected():
+            self.connection.commit()
+            
+    def rollback(self):
+        """Revierte la transacción actual en caso de error."""
+        if self.connection and self.connection.is_connected():
+            self.connection.rollback()
     
     def execute_query(self, query: str, params: tuple = None):
+        """Ejecuta un SELECT y retorna los resultados."""
+        self.connect()
         try:
-            if not self.connect():
-                return []
             self.cursor.execute(query, params or ())
             return self.cursor.fetchall()
         except Error as e:
-            print(f"Error al ejecutar consulta: {e}")
-            return []
+            print(f"Error Database execute_query: {e}")
+            raise e
     
     def execute_update(self, query: str, params: tuple = None):
+        """Ejecuta un UPDATE o DELETE y retorna las filas afectadas. Requiere commit posterior (o externo)."""
+        self.connect()
         try:
-            if not self.connect():
-                return 0
             self.cursor.execute(query, params or ())
-            self.connection.commit()
+            # NOTA: El commit() ahora es responsabilidad del que orqueste la transacción
             return self.cursor.rowcount
         except Error as e:
-            print(f"Error al ejecutar actualización: {e}")
-            return 0
+            print(f"Error Database execute_update: {e}")
+            raise e
     
     def execute_insert(self, query: str, params: tuple = None):
+        """Ejecuta un INSERT y retorna el ID insertado. Requiere commit posterior (o externo)."""
+        self.connect()
         try:
-            if not self.connect():
-                return 0
             self.cursor.execute(query, params or ())
-            self.connection.commit()
+            # NOTA: El commit() ahora es responsabilidad del que orqueste la transacción
             return self.cursor.lastrowid
         except Error as e:
-            print(f"Error al ejecutar inserción: {e}")
-            return 0
+            print(f"Error Database execute_insert: {e}")
+            raise e

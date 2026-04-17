@@ -1,0 +1,24 @@
+tags:
+  - Entrenadores
+security:
+  - Bearer: []
+parameters:
+  - name: entrenador_id
+    in: path
+    type: integer
+    required: true
+  - in: body
+    name: body
+    required: true
+    schema:
+      type: object
+      properties:
+        especialidad:
+          type: string
+        certificaciones:
+          type: string
+responses:
+  200:
+    description: Perfil actualizado
+  403:
+    description: No autorizado

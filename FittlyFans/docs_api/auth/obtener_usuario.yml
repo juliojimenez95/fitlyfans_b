@@ -1,0 +1,15 @@
+tags:
+  - Usuarios
+security:
+  - Bearer: []
+parameters:
+  - name: usuario_id
+    in: path
+    type: integer
+    required: true
+    description: ID del usuario
+responses:
+  200:
+    description: Datos del usuario
+  404:
+    description: Usuario no encontrado

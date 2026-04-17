@@ -1,0 +1,48 @@
+tags:
+  - Autenticación
+consumes:
+  - application/json
+parameters:
+  - in: body
+    name: datos_registro
+    description: Información estructurada para el registro.
+    required: true
+    schema:
+      type: object
+      required:
+        - nombre
+        - correo
+        - contrasena
+      properties:
+        nombre:
+          type: string
+          example: Juan Perez
+        correo:
+          type: string
+          example: juan@fitlyfans.com
+        contrasena:
+          type: string
+          example: segura123
+        tipo_usuario:
+          type: string
+          enum: [generico, suscriptor, entrenador]
+          example: entrenador
+        objetivo:
+          type: string
+          example: Bajar de peso
+        nivel_fitness:
+          type: string
+          example: Principiante
+        especialidad:
+          type: string
+          example: Hipertrofia
+        certificaciones:
+          type: string
+          example: Personal Trainer Crossfit
+responses:
+  201:
+    description: Registro exitoso
+  400:
+    description: Faltan datos requeridos
+  409:
+    description: El correo ya existe

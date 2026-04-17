@@ -1,0 +1,14 @@
+tags:
+  - Entrenadores
+security:
+  - Bearer: []
+parameters:
+  - name: entrenador_id
+    in: path
+    type: integer
+    required: true
+responses:
+  200:
+    description: Datos del entrenador
+  404:
+    description: Entrenador no encontrado
