@@ -25,17 +25,28 @@ def crear_rutina(*args, **kwargs):
     else:
         return jsonify({"error": "No se pudo crear la rutina"}), 400
 
+@rutina_bp.route("/rutinas/feed", methods=["GET"])
+@token_required
+def feed_suscriptor(current_user=None, **kwargs):
+    if isinstance(current_user, dict):
+        id_suscriptor = current_user.get('id')
+    else:
+        id_suscriptor = current_user[0] if isinstance(current_user, tuple) else getattr(current_user, 'id', None)
+        
+    rutinas = rutina_controller.listar_feed_suscriptor(id_suscriptor)
+    return jsonify(rutinas), 200
+
 @rutina_bp.route("/rutinas/<int:rutina_id>", methods=["GET"])
 @token_required
 @swag_from('../../docs_api/rutina/obtener_rutina.yml')
-def obtener_rutina(rutina_id):
-    rutina = rutina_controller.obtener(rutina_id)
+def obtener_rutina(rutina_id, **kwargs):
+    rutina = rutina_controller.obtener_con_ejercicios(rutina_id)
     return jsonify(rutina), 200 if rutina else 404
 
 @rutina_bp.route("/rutinas/<int:rutina_id>", methods=["PUT"])
 @token_required
 @swag_from('../../docs_api/rutina/actualizar_rutina.yml')
-def actualizar_rutina(rutina_id):
+def actualizar_rutina(rutina_id, *args, **kwargs):
     datos = request.get_json()
     exito = rutina_controller.actualizar(rutina_id, datos)
     return jsonify({"actualizado": exito}), 200 if exito else 400
@@ -43,21 +54,40 @@ def actualizar_rutina(rutina_id):
 @rutina_bp.route("/rutinas/<int:rutina_id>", methods=["DELETE"])
 @token_required
 @swag_from('../../docs_api/rutina/eliminar_rutina.yml')
-def eliminar_rutina(rutina_id):
+def eliminar_rutina(rutina_id, *args, **kwargs):
     exito = rutina_controller.eliminar(rutina_id)
     return jsonify({"eliminado": exito}), 200 if exito else 400
+
+from app.controllers.rutina_ejercio_controller import RutinaEjercicioController
+
+@rutina_bp.route("/rutinas/<int:rutina_id>/ejercicios", methods=["PUT"])
+@token_required
+def reemplazar_ejercicios(rutina_id, *args, **kwargs):
+    datos = request.get_json()
+    ejercicios = datos.get('ejercicios', [])
+    
+    rutina_ej_controller = RutinaEjercicioController()
+    exito = rutina_ej_controller.reemplazar_ejercicios(rutina_id, ejercicios)
+    
+    return jsonify({"actualizado": exito}), 200 if exito else 400
 
 @rutina_bp.route("/rutinas/entrenador/<int:entrenador_id>", methods=["GET"])
 @token_required
 @swag_from('../../docs_api/rutina/listar_por_entrenador.yml')
-def listar_por_entrenador(entrenador_id):
-    rutinas = rutina_controller.listar_por_entrenador(entrenador_id)
+def listar_por_entrenador(entrenador_id, *args, **kwargs):
+    limite = int(request.args.get('limit', 10))
+    pagina = int(request.args.get('page', 1))
+    busqueda = request.args.get('search', '')
+    dificultad = request.args.get('nivel', 'todas')
+    
+    offset = (pagina - 1) * limite
+    rutinas = rutina_controller.listar_por_entrenador(entrenador_id, limite, offset, busqueda, dificultad)
     return jsonify(rutinas), 200
 
 @rutina_bp.route("/rutinas/nivel/<string:nivel>", methods=["GET"])
 @token_required
 @swag_from('../../docs_api/rutina/listar_por_nivel.yml')
-def listar_por_nivel(nivel):
+def listar_por_nivel(nivel, *args, **kwargs):
     limite = int(request.args.get("limite", 100))
     rutinas = rutina_controller.listar_por_nivel(nivel, limite)
     return jsonify(rutinas), 200
@@ -65,7 +95,7 @@ def listar_por_nivel(nivel):
 @rutina_bp.route("/rutinas/buscar", methods=["GET"])
 @token_required
 @swag_from('../../docs_api/rutina/buscar_rutinas.yml')
-def buscar_rutinas():
+def buscar_rutinas(*args, **kwargs):
     termino = request.args.get("termino", "")
     limite = int(request.args.get("limite", 100))
     resultados = rutina_controller.buscar(termino, limite)

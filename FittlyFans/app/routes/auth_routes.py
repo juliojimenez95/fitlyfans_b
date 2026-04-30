@@ -2,8 +2,10 @@ from flask import Blueprint, request, jsonify
 import jwt
 import datetime
 from functools import wraps
+from marshmallow import ValidationError
 from app.config import Config
 from app.controllers.usuario_controller import UsuarioController
+from app.schemas.auth_schemas import LoginSchema, RegistroSchema
 from flasgger import swag_from
 
 auth_bp = Blueprint('auth', __name__)
@@ -13,16 +15,16 @@ usuario_controller = UsuarioController()
 @swag_from('../../docs_api/auth/login.yml')
 def login():
     """Inicia sesión y genera un token JWT."""
-    data = request.json
-    
-    if not data:
-        return jsonify({'error': 'No se proporcionaron credenciales'}), 400
+    if not request.is_json:
+        return jsonify({'error': 'La petición debe ser JSON'}), 400
+        
+    try:
+        data = LoginSchema().load(request.json)
+    except ValidationError as err:
+        return jsonify({'error': 'Errores de validación', 'detalles': err.messages}), 400
     
     correo = data.get('correo')
     contrasena = data.get('contrasena')
-    
-    if not correo or not contrasena:
-        return jsonify({'error': 'Se requiere correo y contraseña'}), 400
     
     # Verificar credenciales
     usuario = usuario_controller.verificar_credenciales(correo, contrasena)
@@ -47,16 +49,13 @@ def login():
 @swag_from('../../docs_api/auth/register.yml')
 def register():
     """Registra un nuevo usuario y genera un token JWT."""
-    data = request.json
-    
-    if not data:
-        return jsonify({'error': 'No se proporcionaron datos'}), 400
-    
-    # Validar datos requeridos
-    required_fields = ['nombre', 'correo', 'contrasena']
-    for field in required_fields:
-        if field not in data:
-            return jsonify({'error': f'Campo requerido: {field}'}), 400
+    if not request.is_json:
+        return jsonify({'error': 'La petición debe ser JSON'}), 400
+        
+    try:
+        data = RegistroSchema().load(request.json)
+    except ValidationError as err:
+        return jsonify({'error': 'Errores de validación', 'detalles': err.messages}), 400
     
     # Verificar si el correo ya está registrado
     usuario_existente = usuario_controller.obtener_por_correo(data['correo'])

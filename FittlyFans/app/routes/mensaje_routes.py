@@ -147,3 +147,13 @@ def eliminar_mensaje(current_user, mensaje_id):
         return jsonify({'error': 'No se pudo eliminar el mensaje'}), 400
     
     return jsonify({'mensaje': 'Mensaje eliminado correctamente'}), 200
+
+# Obtener inbox de conversaciones del usuario
+@mensaje_bp.route('/conversaciones', methods=['GET'])
+@token_required
+def listar_conversaciones(current_user):
+    conversaciones = mensaje_controller.listar_conversaciones_usuario(
+        current_user['id'], 
+        current_user['tipo_usuario']
+    )
+    return jsonify({'conversaciones': conversaciones}), 200

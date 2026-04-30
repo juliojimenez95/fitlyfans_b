@@ -6,7 +6,7 @@ from app.models import db
 import os
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads', 'videos')
+app.config['UPLOAD_FOLDER'] = os.path.join(app.root_path, 'uploads')
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max upload
 app.config['BASE_URL'] = 'http://127.0.0.1:5000'  # Cambia esto según tu configuración
 
@@ -59,8 +59,11 @@ def create_app():
     from app.routes.rutina_routes import rutina_bp
     from app.routes.contenido_routes import contenido_bp
     from app.routes.comentario_routes import comentario_bp
+    from app.routes.progreso_routes import progreso_bp
     from app.routes.conversacion_routes import mensajes_bp
     from app.routes.mensaje_routes import mensaje_bp
+    from app.routes.archivo_routes import archivo_bp
+    from app.routes.plan_routes import plan_bp
 
     app.register_blueprint(auth_bp, url_prefix='/api/auth')
     app.register_blueprint(suscriptor_bp, url_prefix='/api/suscriptor')
@@ -74,5 +77,8 @@ def create_app():
     app.register_blueprint(comentario_bp, url_prefix='/api/comentario')
     app.register_blueprint(mensajes_bp, url_prefix='/api/mensajes')
     app.register_blueprint(mensaje_bp, url_prefix='/api/mensaje')
+    app.register_blueprint(archivo_bp, url_prefix='/api/archivos')
+    app.register_blueprint(plan_bp, url_prefix='/api/planes')
+    app.register_blueprint(progreso_bp, url_prefix='/api/progreso')
 
     return app

@@ -9,8 +9,9 @@ El proyecto está diseñado bajo una arquitectura limpia y modularizada por domi
 - **Autenticación (`auth`)**: JWT (`PyJWT`) para manejo de sesiones y `bcrypt` para las contraseñas.
 - **Suscriptores y Entrenadores (`suscriptor`, `entrenador`)**: Gestión de perfiles y roles.
 - **Suscripciones y Pagos (`suscripcion`, `pagos`)**: Lógica de acceso e interacciones monetarias.
-- **Gestión Física (`experiencias`, `ejercicios`, `rutina`)**: Manejo estructurado de entrenamientos.
-- **Interacción (`contenido`, `comentario`, `mensajes`)**: Gestión de contenido multimedia, foro/comentarios y mensajería directa intra-plataforma.
+- **Gestión Física (`experiencias`, `ejercicios`, `rutina`, `plan`)**: Manejo estructurado de entrenamientos (Core Business). Separación estricta entre Rutinas y Ejercicios.
+- **Interacción Social (`contenido`, `comentario`)**: Gestión de publicaciones multimedia (Engagement). Se separa en dos feeds: "Muro" (Premium, solo entrenadores seguidos) y "Descubrir" (Global).
+- **Chat Bidireccional (`conversacion`, `mensaje`)**: Comunicación directa entre suscriptor y entrenador vía HTTP Polling.
 
 ---
 
@@ -27,11 +28,20 @@ FittlyFans/
 │   ├── utils/               # Funciones compartidas, encriptación, validaciones
 │   └── uploads/             # Almacenamiento local de archivos (videos, etc.)
 ├── docs_api/                # (Swagger) Documentación estática modular en YAML
+├── openspec/                # 📝 (SDD) Especificaciones técnicas y contratos del sistema
 ├── tests/                   # Directorio de pruebas y testing de la API
 ├── .env                     # Variables de entorno locales (NO SUBIR A REPOSITORIO)
 ├── requirements.txt         # Dependencias de Python
 └── run.py                   # Script de ejecución del servidor local
 ```
+
+---
+
+## 🏗 Spec-Driven Development (SDD)
+Este proyecto sigue el paradigma de **Desarrollo Orientado a Especificaciones**.
+- No se escribe código sin una especificación formal aprobada.
+- Las especificaciones ("Specs") viven en la carpeta `openspec/` y actúan como contratos de comportamiento.
+- Se utilizan agentes de IA y flujos estructurados para planear (`sdd-propose`), detallar (`sdd-spec`), implementar (`sdd-apply`) y verificar (`sdd-verify`).
 
 ---
 
@@ -114,8 +124,9 @@ python run.py
    - Rutinas (Routing) - `app/routes`
    - Lógica de Dominio (Controladores/Casos de uso) - `app/controllers`
    - Acceso a datos e infraestructura - `app/models`
-3. **Early Returns (Bouncer Pattern)**: Preferido en los controladores para validación fluida de data y evitar *if* anidados.
-4. **Documentación Modular (Separation of Concerns)**: Todas las rutas de Swagger flasgger están extraídas de los `controllers`/`routes` hacia el directorio autónomo `docs_api/` gestionado por el decorador `@swag_from`.
+3. **Data Transfer Objects (DTOs)**: Se utiliza `Marshmallow` en `app/schemas` para validar y filtrar todas las cargas útiles entrantes antes de que alcancen los controladores, asegurando integridad de datos.
+4. **Early Returns (Bouncer Pattern)**: Preferido en los controladores para validación fluida de data y evitar *if* anidados.
+5. **Documentación Modular (Separation of Concerns)**: Todas las rutas de Swagger flasgger están extraídas de los `controllers`/`routes` hacia el directorio autónomo `docs_api/` gestionado por el decorador `@swag_from`.
 
 ---
 

@@ -1,5 +1,6 @@
 import mysql.connector
 from mysql.connector import Error
+from mysql.connector import pooling
 import os
 from dotenv import load_dotenv
 
@@ -9,7 +10,8 @@ load_dotenv()
 class DatabaseConnectionSingleton:
     """
     Implementación del patrón Singleton para conexión a MySQL.
-    Asegura que solo exista una instancia de la conexión a la base de datos.
+    Asegura que solo exista un pool de conexiones a la base de datos.
+    Cada operación obtiene una conexión del pool y la devuelve, haciéndolo thread-safe.
     """
     _instance = None
     
@@ -28,80 +30,86 @@ class DatabaseConnectionSingleton:
             self.user = os.getenv('DB_USER', 'root')
             self.password = os.getenv('DB_PASSWORD', '')
             
-            self.connection = None
-            self.cursor = None
-            self._initialized = True
-    
-    def connect(self):
-        if self.connection is None or not self.connection.is_connected():
             try:
-                self.connection = mysql.connector.connect(
+                self.pool = mysql.connector.pooling.MySQLConnectionPool(
+                    pool_name="fittlyfans_pool",
+                    pool_size=10,
+                    pool_reset_session=True,
                     host=self.host,
                     port=self.port,
                     database=self.database,
                     user=self.user,
                     password=self.password
                 )
-                if self.connection.is_connected():
-                    self.cursor = self.connection.cursor(dictionary=True)
-                    return True
+                print("Pool de conexiones MySQL inicializado correctamente")
             except Error as e:
-                print(f"Error al conectar a MySQL: {e}")
-                raise e
-        return True
+                print(f"Error al crear pool de MySQL: {e}")
+                self.pool = None
+
+            self._initialized = True
     
-    def disconnect(self):
-        if self.connection and self.connection.is_connected():
-            if self.cursor:
-                self.cursor.close()
-            self.connection.close()
-            self.cursor = None
-            self.connection = None
-            print("Conexión cerrada")
+    def get_connection(self):
+        """Obtiene una conexión del pool."""
+        if self.pool:
+            return self.pool.get_connection()
+        raise Exception("El pool de conexiones no está inicializado")
             
-    def start_transaction(self):
-        """Inicia una transacción explícita."""
-        self.connect()
-        self.connection.start_transaction()
-        
-    def commit(self):
-        """Confirma la transacción actual."""
-        if self.connection and self.connection.is_connected():
-            self.connection.commit()
-            
-    def rollback(self):
-        """Revierte la transacción actual en caso de error."""
-        if self.connection and self.connection.is_connected():
-            self.connection.rollback()
-    
     def execute_query(self, query: str, params: tuple = None):
         """Ejecuta un SELECT y retorna los resultados."""
-        self.connect()
+        conn = self.get_connection()
+        cursor = conn.cursor(dictionary=True)
         try:
-            self.cursor.execute(query, params or ())
-            return self.cursor.fetchall()
+            cursor.execute(query, params or ())
+            resultados = cursor.fetchall()
+            return resultados
         except Error as e:
             print(f"Error Database execute_query: {e}")
             raise e
+        finally:
+            cursor.close()
+            conn.close()
     
     def execute_update(self, query: str, params: tuple = None):
-        """Ejecuta un UPDATE o DELETE y retorna las filas afectadas. Requiere commit posterior (o externo)."""
-        self.connect()
+        """Ejecuta un UPDATE o DELETE y retorna las filas afectadas. Hace commit autómatico."""
+        conn = self.get_connection()
+        cursor = conn.cursor(dictionary=True)
         try:
-            self.cursor.execute(query, params or ())
-            # NOTA: El commit() ahora es responsabilidad del que orqueste la transacción
-            return self.cursor.rowcount
+            cursor.execute(query, params or ())
+            rowcount = cursor.rowcount
+            conn.commit()
+            return rowcount
         except Error as e:
+            conn.rollback()
             print(f"Error Database execute_update: {e}")
             raise e
+        finally:
+            cursor.close()
+            conn.close()
     
     def execute_insert(self, query: str, params: tuple = None):
-        """Ejecuta un INSERT y retorna el ID insertado. Requiere commit posterior (o externo)."""
-        self.connect()
+        """Ejecuta un INSERT y retorna el ID insertado. Hace commit automático."""
+        conn = self.get_connection()
+        cursor = conn.cursor(dictionary=True)
         try:
-            self.cursor.execute(query, params or ())
-            # NOTA: El commit() ahora es responsabilidad del que orqueste la transacción
-            return self.cursor.lastrowid
+            cursor.execute(query, params or ())
+            lastrowid = cursor.lastrowid
+            conn.commit()
+            return lastrowid
         except Error as e:
+            conn.rollback()
             print(f"Error Database execute_insert: {e}")
             raise e
+        finally:
+            cursor.close()
+            conn.close()
+            
+    # Mantenemos estos métodos por retrocompatibilidad si alguna parte del código asume estado
+    # pero advertimos que su uso ya no es recomendado en la arquitectura de pool.
+    def commit(self):
+        pass
+        
+    def rollback(self):
+        pass
+        
+    def disconnect(self):
+        pass

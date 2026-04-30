@@ -11,19 +11,20 @@ pago_controller = PagoController()
 @token_required
 @swag_from('../../docs_api/pago/crear_pago.yml')
 def crear_pago(*args, **kwargs):
-    usuario = kwargs['current_user']
     data = request.json
 
-    id_suscriptor = usuario['id']
-    monto = data.get('monto')
-    metodo_pago = data.get('metodo_pago')
-    estado = data.get('estado', 'pendiente')
-    descripcion = data.get('descripcion')
+    id_suscripcion = data.get('id_suscripcion')
+    monto = data.get('valor') # En el front es valor, en BD es monto
+    if not monto:
+        monto = data.get('monto')
+    metodo_pago = data.get('metodo_pago', 'tarjeta')
+    estado = data.get('estado', 'completado')
+    descripcion = data.get('descripcion', 'Pago de suscripcion MVP')
 
-    if not monto or not metodo_pago:
+    if not monto or not metodo_pago or not id_suscripcion:
         return jsonify({'error': 'Faltan campos obligatorios'}), 400
 
-    id_pago = pago_controller.crear(id_suscriptor, monto, metodo_pago, estado, descripcion)
+    id_pago = pago_controller.crear(id_suscripcion, monto, metodo_pago, estado, descripcion)
     return jsonify({'mensaje': 'Pago registrado', 'id_pago': id_pago}), 201
 
 # Obtener un pago por ID

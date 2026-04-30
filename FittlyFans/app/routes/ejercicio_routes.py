@@ -40,7 +40,7 @@ def crear_ejercicio(*args, **kwargs):
             return jsonify({'error': 'No se pudo identificar al entrenador'}), 403
 
         # (Opcional) Validar que el rol sea "entrenador"
-        if entrenador.get('rol') != 'entrenador':
+        if entrenador.get('tipo_usuario') != 'entrenador':
             return jsonify({'error': 'No autorizado. Debes ser un entrenador'}), 403
 
         # Asegúrate de que existe el directorio para subir
@@ -107,10 +107,33 @@ def obtener_ejercicio(ejercicio_id, *args, **kwargs):
 @token_required
 @swag_from('../../docs_api/ejercicio/actualizar_ejercicio.yml')
 def actualizar_ejercicio(ejercicio_id, *args, **kwargs):
-    datos = request.json
+    # Si viene JSON, procesarlo como antes
+    if request.is_json:
+        datos = request.json
+    else:
+        # Si viene multipart/form-data
+        datos = {}
+        if 'nombre' in request.form: datos['nombre'] = request.form.get('nombre')
+        if 'descripcion' in request.form: datos['descripcion'] = request.form.get('descripcion')
+        if 'grupo_muscular' in request.form: datos['grupo_muscular'] = request.form.get('grupo_muscular')
+        if 'tipo' in request.form: datos['tipo'] = request.form.get('tipo')
+
+        if 'video' in request.files:
+            file = request.files['video']
+            if file and file.filename != '' and allowed_video_file(file.filename):
+                upload_folder = os.path.join(current_app.root_path, 'uploads', 'videos')
+                if not os.path.exists(upload_folder):
+                    os.makedirs(upload_folder)
+                
+                filename = secure_filename(file.filename)
+                unique_filename = f"{uuid.uuid4().hex}_{filename}"
+                file_path = os.path.join(upload_folder, unique_filename)
+                file.save(file_path)
+                datos['video_instruccion'] = f"/videos/{unique_filename}"
+
     actualizado = ejercicio_controller.actualizar(ejercicio_id, datos)
     if not actualizado:
-        return jsonify({'error': 'No se pudo actualizar el ejercicio'}), 400
+        return jsonify({'error': 'No se pudo actualizar el ejercicio o no hubo cambios'}), 400
     return jsonify({'mensaje': 'Ejercicio actualizado correctamente'}), 200
 
 # Eliminar ejercicio
@@ -124,7 +147,7 @@ def eliminar_ejercicio(ejercicio_id, *args, **kwargs):
     return jsonify({'mensaje': 'Ejercicio eliminado correctamente'}), 200
 
 # Listar todos los ejercicios con paginación
-@ejercicio_bp.route('', methods=['GET'])
+@ejercicio_bp.route('/todos', methods=['GET'])
 @token_required
 @swag_from('../../docs_api/ejercicio/listar_ejercicios.yml')
 def listar_ejercicios(*args, **kwargs):
@@ -196,11 +219,18 @@ def obtener_ejercicios_entrenador(*args, **kwargs):
             return jsonify({'error': 'No se pudo identificar al entrenador'}), 403
 
         # (Opcional) Validar que el rol sea "entrenador"
-        if entrenador.get('rol') != 'entrenador':
+        if entrenador.get('tipo_usuario') != 'entrenador':
             return jsonify({'error': 'No autorizado. Debes ser un entrenador'}), 403
 
+        # Extraer parámetros de paginación y filtros
+        limite = int(request.args.get('limit', 10))
+        pagina = int(request.args.get('page', 1))
+        busqueda = request.args.get('search', '')
+        tipo = request.args.get('tipo', 'todas')
+        offset = (pagina - 1) * limite
+
         # Obtener los ejercicios del entrenador desde el controlador
-        ejercicios = ejercicio_controller.obtener_por_entrenador(entrenador_id)
+        ejercicios = ejercicio_controller.obtener_por_entrenador(entrenador_id, limite, offset, busqueda, tipo)
 
         # Si no hay ejercicios, devolver lista vacía
         if not ejercicios:
@@ -208,6 +238,14 @@ def obtener_ejercicios_entrenador(*args, **kwargs):
                 'mensaje': 'No se encontraron ejercicios para este entrenador',
                 'ejercicios': []
             }), 200
+
+        # Formatear la URL de video para que el frontend la pueda mostrar
+        for ej in ejercicios:
+            if ej.get('video_path') or ej.get('video_instruccion'):
+                video_src = ej.get('video_path') or ej.get('video_instruccion')
+                # El frontend le agrega http://127.0.0.1:5000, así que solo pasamos el path de la API
+                filename = os.path.basename(video_src)
+                ej['video_url'] = f"/api/ejercicios/videos/{filename}"
 
         return jsonify({
             'mensaje': 'Ejercicios obtenidos correctamente',
@@ -234,7 +272,7 @@ def obtener_ejercicios_por_entrenador_id(entrenador_id, *args, **kwargs):
             return jsonify({'error': 'No se pudo identificar al usuario'}), 403
 
         # Solo permitir si es el mismo entrenador o si es admin
-        if usuario_actual.get('id') != entrenador_id and usuario_actual.get('rol') != 'admin':
+        if usuario_actual.get('id') != entrenador_id and usuario_actual.get('tipo_usuario') != 'admin':
             return jsonify({'error': 'No autorizado. Solo puedes ver tus propios ejercicios'}), 403
 
         # Obtener los ejercicios del entrenador específico
