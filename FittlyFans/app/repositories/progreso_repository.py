@@ -20,3 +20,28 @@ class ProgresoRepository(BaseRepository):
         """
         result = self.execute_query(query, (suscriptor_id, asignacion_plan_id, semana, dia))
         return len(result) > 0
+
+    def obtener_historial_suscriptor(self, suscriptor_id: int) -> List[Dict]:
+        """Obtiene todo el historial de entrenamiento de un suscriptor, junto con detalles de la rutina y plan."""
+        query = """
+        SELECT 
+            h.id as historial_id,
+            h.suscriptor_id,
+            h.rutina_id,
+            h.asignacion_plan_id,
+            h.semana,
+            h.dia,
+            h.fecha_completada,
+            h.duracion_segundos,
+            r.nombre as rutina_nombre,
+            r.nivel_dificultad as rutina_nivel,
+            ap.fecha_inicio as plan_fecha_inicio,
+            p.nombre as plan_nombre
+        FROM Historial_Entrenamiento h
+        JOIN Rutina r ON h.rutina_id = r.id
+        LEFT JOIN Asignacion_Plan ap ON h.asignacion_plan_id = ap.id
+        LEFT JOIN Plan_Entrenamiento p ON ap.plan_id = p.id
+        WHERE h.suscriptor_id = %s
+        ORDER BY h.fecha_completada DESC
+        """
+        return self.execute_query(query, (suscriptor_id,))

@@ -66,7 +66,7 @@ class UsuarioController:
     
     def actualizar(self, usuario_id: int, datos: Dict) -> bool:
         """Actualiza los datos de un usuario de forma atómica."""
-        campos_permitidos = ["nombre", "correo", "contrasena", "tipo_usuario"]
+        campos_permitidos = ["nombre", "correo", "contrasena", "tipo_usuario", "avatar_url", "bio"]
         campos_a_actualizar = {k: v for k, v in datos.items() if k in campos_permitidos}
         
         if not campos_a_actualizar:

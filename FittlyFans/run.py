@@ -7,5 +7,7 @@ app = create_app()
 # ✅ no se mandan parametros porque los toma del .env
 db = DatabaseConnectionSingleton()
 
+from app.extensions import socketio
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=Config.DEBUG)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=Config.DEBUG, allow_unsafe_werkzeug=True)

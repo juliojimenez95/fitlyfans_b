@@ -68,7 +68,7 @@ class ContenidoRepository(BaseRepository):
 
     def listar_feed_suscriptor(self, id_suscriptor: int, limite: int, offset: int) -> List[Dict]:
         query = """
-        SELECT c.*, u.nombre as nombre_usuario, u.tipo_usuario,
+        SELECT c.*, u.nombre as nombre_usuario, u.tipo_usuario, u.avatar_url,
                (SELECT COUNT(*) FROM Comentario WHERE id_contenido = c.id) as num_comentarios
         FROM Contenido c
         JOIN Usuario u ON c.id_usuario = u.id
@@ -81,7 +81,7 @@ class ContenidoRepository(BaseRepository):
 
     def listar_feed_descubrir(self, id_suscriptor: int, limite: int, offset: int) -> List[Dict]:
         query = """
-        SELECT c.*, u.nombre as nombre_usuario, u.tipo_usuario,
+        SELECT c.*, u.nombre as nombre_usuario, u.tipo_usuario, u.avatar_url,
                (SELECT COUNT(*) FROM Comentario WHERE id_contenido = c.id) as num_comentarios
         FROM Contenido c
         JOIN Usuario u ON c.id_usuario = u.id

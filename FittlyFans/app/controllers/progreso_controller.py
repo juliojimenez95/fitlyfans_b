@@ -30,3 +30,6 @@ class ProgresoController:
             self.db.commit()
             return True
         return False
+
+    def obtener_historial_suscriptor(self, suscriptor_id: int):
+        return self.progreso_repo.obtener_historial_suscriptor(suscriptor_id)

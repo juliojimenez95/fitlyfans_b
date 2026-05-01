@@ -18,6 +18,13 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    # Inicializar SocketIO
+    from app.extensions import socketio
+    socketio.init_app(app)
+
+    # Importar los eventos de WebSockets (lo crearemos a continuación)
+    from app import sockets
+
     # Configuración de Swagger
     app.config['SWAGGER'] = {
         'title': 'FitlyFans API',

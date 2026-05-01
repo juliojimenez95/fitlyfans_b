@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
 import jwt
 import datetime
+import os
+from werkzeug.utils import secure_filename
 from functools import wraps
 from marshmallow import ValidationError
 from app.config import Config
@@ -164,4 +166,38 @@ def eliminar_usuario(usuario_id):
     if not eliminado:
         return jsonify({'error': 'No se pudo eliminar el usuario'}), 500
     return jsonify({'mensaje': 'Usuario eliminado correctamente'}), 200
+
+@auth_bp.route('/usuarios/<int:usuario_id>/avatar', methods=['POST'])
+@token_required
+def subir_avatar(usuario_id):
+    """Sube y actualiza el avatar de un usuario"""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No se encontró el archivo'}), 400
+        
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'Nombre de archivo vacío'}), 400
+        
+    if file:
+        filename = secure_filename(file.filename)
+        timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+        new_filename = f"avatar_{usuario_id}_{timestamp}_{filename}"
+        
+        # Ensure uploads folder exists
+        os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
+        
+        filepath = os.path.join(Config.UPLOAD_FOLDER, new_filename)
+        file.save(filepath)
+        
+        # Guardar ruta relativa para servir desde el backend
+        avatar_url = f"/static/uploads/{new_filename}"
+        
+        actualizado = usuario_controller.actualizar(usuario_id, {'avatar_url': avatar_url})
+        if not actualizado:
+            return jsonify({'error': 'No se pudo actualizar el avatar'}), 500
+            
+        usuario = usuario_controller.obtener_por_id(usuario_id)
+        return jsonify({'mensaje': 'Avatar actualizado', 'usuario': usuario}), 200
+    
+    return jsonify({'error': 'Error al procesar el archivo'}), 500
 
